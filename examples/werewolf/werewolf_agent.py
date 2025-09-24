@@ -359,7 +359,7 @@ class WerewolfAgent(LitAgent):
             # 添加日志检查
             prompt_length = len(prompt_ids)
             print(f"Prompt length: {prompt_length} tokens")
-            # if prompt_length >= 16384:  # 你的 max_prompt_length TODO: 过长上下文发送处理前移动
+            # if prompt_length >= 16384:  # 你的 max_prompt_length TODO: 过长上下文发送处理.拆掉上下文中的think
             #     print(f"WARNING: Prompt truncated! Original length: {prompt_length}")
             prompt = self.tokenizer.decode(prompt_ids)
 

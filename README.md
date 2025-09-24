@@ -24,6 +24,34 @@ https://github.com/agentscope-ai/agentscope
 中文狼人杀修改版链接
 https://github.com/af-74413592/agentscope
 
+需做如下改动：
+src/agentscope/model/_openai_model.py 371行
+改为
+if choice.message.content:
+try:
+        thinking_part = choice.message.content.split("<think>")[1].split("</think>")[0]  
+        content_part = choice.message.content.split("</think>")[1]  
+        content_blocks.append(
+        ThinkingBlock(
+                type="thinking",
+                thinking=thinking_part,
+        ),
+        )
+        content_blocks.append(
+        TextBlock(
+                type="text",
+                text=content_part,
+        ),
+        )
+except:
+        content_blocks.append(
+        TextBlock(
+                type="text",
+                text=response.choices[0].message.content,
+        ),
+        )
+
+
 
 verlv0.5.0 改动
 
