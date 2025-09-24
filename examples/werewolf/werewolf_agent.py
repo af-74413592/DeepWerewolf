@@ -349,6 +349,7 @@ class WerewolfAgent(LitAgent):
         self.tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B")
 
     def _process_triplets_with_rewards(self, wolf_win_flag: bool, NAME_TO_ROLE: dict) -> list[Triplet]:
+        breakpoint()
         spans = self.tracer.get_last_trace()
         triplets = self.triplet_exporter.export(spans)
         new_triplets= []
@@ -359,7 +360,7 @@ class WerewolfAgent(LitAgent):
             # 添加日志检查
             prompt_length = len(prompt_ids)
             print(f"Prompt length: {prompt_length} tokens")
-            if prompt_length >= 10240:  # 你的 max_prompt_length
+            if prompt_length >= 16384:  # 你的 max_prompt_length
                 print(f"WARNING: Prompt truncated! Original length: {prompt_length}")
             prompt = self.tokenizer.decode(prompt_ids)
 
@@ -386,8 +387,9 @@ class WerewolfAgent(LitAgent):
                         
                         if not success_after_error:
                             # 错误后面没有成功调用，说明这是最新的错误
-                            last_error_index.append(i-1)
-                            print(f"WARNING: Latest ValidationError detected: {error_msg}")
+                            if i != 0:
+                                last_error_index.append(i-1)
+                                print(f"WARNING: Latest ValidationError detected: {error_msg}")
             name = prompt.split("<history>\n主持人: [")[1].split(" ONLY")[0]
             names.append(name)
             role = NAME_TO_ROLE[name]
@@ -397,8 +399,9 @@ class WerewolfAgent(LitAgent):
                 triplet.reward = -10.0 if wolf_win_flag else 10.0
             new_triplets.append(triplet)
         for j in last_error_index:
-            if names[j] == names[j+1]:
-                new_triplets[j].reward = new_triplets[j].reward - 5.0
+            if j+1 < len(names):
+                if names[j] == names[j+1]:
+                    new_triplets[j].reward = new_triplets[j].reward - 5.0
         return new_triplets
     
 
