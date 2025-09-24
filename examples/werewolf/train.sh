@@ -45,11 +45,12 @@ python -m agentlightning.verl \
     algorithm.use_kl_in_reward=False \
     trainer.default_local_dir='/root/dataDisk/checkpoints' \
     trainer.rollout_data_dir='/root/dataDisk/rollout' \
+    trainer.resume_mode=auto \
     trainer.critic_warmup=0 \
     trainer.logger=['console','wandb'] \
     trainer.project_name=${PROJECT_NAME} \
     trainer.experiment_name=${EXPERIMENT_NAME} \
     trainer.nnodes=1 \
-    trainer.save_freq=10 \
+    trainer.save_freq=1 \
     trainer.test_freq=0 \
     trainer.total_epochs=1 $@
