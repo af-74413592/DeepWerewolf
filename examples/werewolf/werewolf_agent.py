@@ -352,7 +352,9 @@ class WerewolfAgent(LitAgent):
         spans = self.tracer.get_last_trace()
         triplets = self.triplet_exporter.export(spans)
         new_triplets= []
-        for triplet in triplets:
+        last_error_index = []
+        names = []
+        for i,triplet in enumerate(triplets):
             prompt_ids = triplet.prompt.get("token_ids")
             # 添加日志检查
             prompt_length = len(prompt_ids)
@@ -360,13 +362,43 @@ class WerewolfAgent(LitAgent):
             if prompt_length >= 10240:  # 你的 max_prompt_length
                 print(f"WARNING: Prompt truncated! Original length: {prompt_length}")
             prompt = self.tokenizer.decode(prompt_ids)
+
+            # 检查是否包含 ValidationError 信息，先检测错误，再看后面是否有成功调用
+            if "Arguments Validation Error" in prompt:
+                import re
+                # 找到最后一个 </history> 标签的位置
+                history_end = prompt.rfind('</history>')
+                if history_end != -1:
+                    # 在最后一个 </history> 之前查找
+                    history_content = prompt[:history_end]
+                    
+                    # 查找所有 ValidationError
+                    error_matches = list(re.finditer(r'Arguments Validation Error: ([^<]+)', history_content))
+                    if error_matches:
+                        # 取最后一个 ValidationError
+                        last_error = error_matches[-1]
+                        error_msg = last_error.group(1).strip()
+                        error_pos = last_error.end()
+                        
+                        # 在这个错误之后查找是否有成功的调用
+                        after_error = history_content[error_pos:]
+                        success_after_error = re.search(r'Successfully generated response\.', after_error)
+                        
+                        if not success_after_error:
+                            # 错误后面没有成功调用，说明这是最新的错误
+                            last_error_index.append(i-1)
+                            print(f"WARNING: Latest ValidationError detected: {error_msg}")
             name = prompt.split("<history>\n主持人: [")[1].split(" ONLY")[0]
+            names.append(name)
             role = NAME_TO_ROLE[name]
             if role in ["werewolf", "wolf_king"]:
                 triplet.reward = 10.0 if wolf_win_flag else -10.0
             else:
                 triplet.reward = -10.0 if wolf_win_flag else 10.0
             new_triplets.append(triplet)
+        for j in last_error_index:
+            if names[j] == names[j+1]:
+                new_triplets[j].reward = new_triplets[j].reward - 5.0
         return new_triplets
     
 

@@ -455,7 +455,7 @@ class AgentModeDaemon:
                 data_id_list.append(sample_info["data_id"])
                 rollout_id_list.append(rollout_id)
                 turn_index_list.append(turn_index)
-            # print(reward_list)
+            print(reward_list)
         n_transition = len(input_ids_list)
         print("***************************************",n_transition)
 
