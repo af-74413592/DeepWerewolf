@@ -23,6 +23,10 @@ reward_list.append(trace["reward"])
 https://github.com/agentscope-ai/agentscope
 中文狼人杀修改版链接
 https://github.com/af-74413592/agentscope
+
+
+verlv0.5.0 改动
+
 注释掉 verl trainer/ppo/ray_trainer.py 415-418行
 real_train_batch_size = config.data.train_batch_size * config.actor_rollout_ref.rollout.n
         assert real_train_batch_size % minimal_bsz == 0, (
