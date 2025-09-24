@@ -4,15 +4,17 @@
 https://github.com/microsoft/agent-lightning
 源码改动：
 注释掉agentlightning/runner.py 115行
-# if trace_spans: 
-        #     triplets = self.triplet_exporter.export(trace_spans)
+if trace_spans: 
+        triplets = self.triplet_exporter.export(trace_spans)
 agentlightning/verl/daemon.py 338行
 trace_list = [
                 {"prompt_ids": t.prompt.get("token_ids", []), "response_ids": t.response.get("token_ids", []), "reward": t.reward}
                 for t in rollout.triplets
             ]
 agentlightning/verl/daemon.py 418行
-# reward_list.append(sample_info["reward"])
+注释掉
+reward_list.append(sample_info["reward"])
+改为
 reward_list.append(trace["reward"])
 
 添加examples/werewolf 实现
@@ -22,11 +24,11 @@ https://github.com/agentscope-ai/agentscope
 中文狼人杀修改版链接
 https://github.com/af-74413592/agentscope
 注释掉 verl trainer/ppo/ray_trainer.py 415-418行
-# real_train_batch_size = config.data.train_batch_size * config.actor_rollout_ref.rollout.n
-        # assert real_train_batch_size % minimal_bsz == 0, (
-        #     f"real_train_batch_size ({real_train_batch_size}) must be divisible by minimal possible batch size "
-        #     f"({minimal_bsz})"
-        # )
+real_train_batch_size = config.data.train_batch_size * config.actor_rollout_ref.rollout.n
+        assert real_train_batch_size % minimal_bsz == 0, (
+        f"real_train_batch_size ({real_train_batch_size}) must be divisible by minimal possible batch size "
+        f"({minimal_bsz})"
+        )
 注释掉 verl trainer/ppo/ray_trainer.py 500 行 # assert config.data.train_batch_size >= config.actor_rollout_ref.actor.ppo_mini_batch_size
 
 
