@@ -349,7 +349,6 @@ class WerewolfAgent(LitAgent):
         self.tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B")
 
     def _process_triplets_with_rewards(self, wolf_win_flag: bool, NAME_TO_ROLE: dict) -> list[Triplet]:
-        breakpoint()
         spans = self.tracer.get_last_trace()
         triplets = self.triplet_exporter.export(spans)
         new_triplets= []
@@ -360,8 +359,8 @@ class WerewolfAgent(LitAgent):
             # 添加日志检查
             prompt_length = len(prompt_ids)
             print(f"Prompt length: {prompt_length} tokens")
-            if prompt_length >= 16384:  # 你的 max_prompt_length
-                print(f"WARNING: Prompt truncated! Original length: {prompt_length}")
+            # if prompt_length >= 16384:  # 你的 max_prompt_length TODO: 过长上下文发送处理前移动
+            #     print(f"WARNING: Prompt truncated! Original length: {prompt_length}")
             prompt = self.tokenizer.decode(prompt_ids)
 
             # 检查是否包含 ValidationError 信息，先检测错误，再看后面是否有成功调用
