@@ -92,6 +92,8 @@ class AgentLightningTrainer(RayPPOTrainer):
                     gen_batch.non_tensor_batch, self.async_rollout_manager.server_addresses
                 )
                 self.agent_mode_daemon.run_until_all_finished()
+                test_metrics = self.agent_mode_daemon.get_test_metrics()
+                metrics.update(test_metrics)
                 batch, agent_metrics = self.agent_mode_daemon.get_train_data_batch(
                     max_prompt_length=self.config.data.max_prompt_length,
                     max_response_length=self.config.data.max_response_length,
