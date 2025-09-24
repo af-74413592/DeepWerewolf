@@ -395,7 +395,7 @@ class WerewolfAgent(LitAgent):
             names.append(name)
             role = NAME_TO_ROLE[name]
             if role in ["werewolf", "wolf_king"]:
-                triplet.reward = 10.0 if wolf_win_flag else -10.0
+                triplet.reward = 20.0 if wolf_win_flag else -10.0
             else:
                 triplet.reward = -10.0 if wolf_win_flag else 10.0
             new_triplets.append(triplet)
