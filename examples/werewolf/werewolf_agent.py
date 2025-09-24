@@ -356,13 +356,15 @@ class WerewolfAgent(LitAgent):
         names = []
         for i,triplet in enumerate(triplets):
             prompt_ids = triplet.prompt.get("token_ids")
+            response_ids = triplet.response.get("token_ids", [])
             # 添加日志检查
             prompt_length = len(prompt_ids)
             print(f"Prompt length: {prompt_length} tokens")
-            # if prompt_length >= 16384:  # 你的 max_prompt_length TODO: 过长上下文发送处理.拆掉上下文中的think
+            # if prompt_length >= 10240:  # 你的 max_prompt_length TODO: 过长上下文发送处理.拆掉上下文中的think
             #     print(f"WARNING: Prompt truncated! Original length: {prompt_length}")
             prompt = self.tokenizer.decode(prompt_ids)
-
+            response = self.tokenizer.decode(response_ids)
+            print(response)
             # 检查是否包含 ValidationError 信息，先检测错误，再看后面是否有成功调用
             if "Arguments Validation Error" in prompt:
                 import re
