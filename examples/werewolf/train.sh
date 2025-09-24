@@ -51,6 +51,6 @@ python -m agentlightning.verl \
     trainer.project_name=${PROJECT_NAME} \
     trainer.experiment_name=${EXPERIMENT_NAME} \
     trainer.nnodes=1 \
-    trainer.save_freq=1 \
+    trainer.save_freq=10 \
     trainer.test_freq=0 \
     trainer.total_epochs=1 $@
