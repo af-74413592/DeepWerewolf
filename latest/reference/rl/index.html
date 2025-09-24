@@ -3607,7 +3607,7 @@ the original interface for compatibility with the RayPPOTrainer.</p>
 <a id="__codelineno-0-342" name="__codelineno-0-342"></a>
 <a id="__codelineno-0-343" name="__codelineno-0-343"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_test_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <a id="__codelineno-0-344" name="__codelineno-0-344"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculates and returns metrics for a validation run.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-345" name="__codelineno-0-345"></a>        <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_train</span><span class="p">,</span> <span class="s2">&quot;This method should only be called during validation.&quot;</span>
+<a id="__codelineno-0-345" name="__codelineno-0-345"></a>        <span class="c1"># assert not self.is_train, &quot;This method should only be called during validation.&quot;</span>
 <a id="__codelineno-0-346" name="__codelineno-0-346"></a>        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_completed_rollouts</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_total_tasks_queued</span>
 <a id="__codelineno-0-347" name="__codelineno-0-347"></a>
 <a id="__codelineno-0-348" name="__codelineno-0-348"></a>        <span class="n">sample_stat_list</span> <span class="o">=</span> <span class="p">[]</span>
@@ -3906,7 +3906,7 @@ the original interface for compatibility with the RayPPOTrainer.</p>
 <span class="normal"><a href="#__codelineno-0-369">369</a></span>
 <span class="normal"><a href="#__codelineno-0-370">370</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-343" name="__codelineno-0-343"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_test_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <a id="__codelineno-0-344" name="__codelineno-0-344"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculates and returns metrics for a validation run.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-345" name="__codelineno-0-345"></a>    <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_train</span><span class="p">,</span> <span class="s2">&quot;This method should only be called during validation.&quot;</span>
+<a id="__codelineno-0-345" name="__codelineno-0-345"></a>    <span class="c1"># assert not self.is_train, &quot;This method should only be called during validation.&quot;</span>
 <a id="__codelineno-0-346" name="__codelineno-0-346"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_completed_rollouts</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_total_tasks_queued</span>
 <a id="__codelineno-0-347" name="__codelineno-0-347"></a>
 <a id="__codelineno-0-348" name="__codelineno-0-348"></a>    <span class="n">sample_stat_list</span> <span class="o">=</span> <span class="p">[]</span>
