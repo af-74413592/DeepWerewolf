@@ -4,19 +4,26 @@
 https://github.com/microsoft/agent-lightning
 源码改动：
 注释掉agentlightning/runner.py 115行
+```
 if trace_spans: 
         triplets = self.triplet_exporter.export(trace_spans)
+```
 agentlightning/verl/daemon.py 338行
+```
 trace_list = [
                 {"prompt_ids": t.prompt.get("token_ids", []), "response_ids": t.response.get("token_ids", []), "reward": t.reward}
                 for t in rollout.triplets
             ]
+```
 agentlightning/verl/daemon.py 418行
 注释掉
+```
 reward_list.append(sample_info["reward"])
+```
 改为
+```
 reward_list.append(trace["reward"])
-
+```
 添加examples/werewolf 实现
 
 和agentscope（458e8eedc94bba89bc3e4c6756e35fb4defbc0ac，Sep 15, 2025）实现的一个中文狼人杀agent-rl训练的案例
@@ -27,6 +34,7 @@ https://github.com/af-74413592/agentscope
 需做如下改动：
 src/agentscope/model/_openai_model.py 371行
 改为
+```
 if choice.message.content:
 try:
         thinking_part = choice.message.content.split("<think>")[1].split("</think>")[0]  
@@ -50,8 +58,9 @@ except:
                 text=response.choices[0].message.content,
         ),
         )
-
+```
 处理过长的prompt：src/agentscope/model/_openai_model.py OpenAIChatModel 的__call__ 函数
+```
 conversations = [{"role":msg["role"], "content":msg["content"][0]['text'] if type(msg["content"]) == list else msg["content"]} for msg in messages]
 input_ids = self.tokenizer.apply_chat_template(
         conversations,
@@ -67,17 +76,21 @@ while len(input_ids) > 10000: （比maxlen稍微小一点）
         add_generation_prompt=True,
         tokenize=True,
         )
-
+```
 verlv0.5.0 改动
 
 注释掉 verl trainer/ppo/ray_trainer.py 415-418行
+```
 real_train_batch_size = config.data.train_batch_size * config.actor_rollout_ref.rollout.n
         assert real_train_batch_size % minimal_bsz == 0, (
         f"real_train_batch_size ({real_train_batch_size}) must be divisible by minimal possible batch size "
         f"({minimal_bsz})"
         )
-注释掉 verl trainer/ppo/ray_trainer.py 500 行 # assert config.data.train_batch_size >= config.actor_rollout_ref.actor.ppo_mini_batch_size
-
+```
+注释掉 verl trainer/ppo/ray_trainer.py 500 行 
+```
+assert config.data.train_batch_size >= config.actor_rollout_ref.actor.ppo_mini_batch_size
+```
 
 ####################################################################
 
