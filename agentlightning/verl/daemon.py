@@ -342,7 +342,7 @@ class AgentModeDaemon:
 
     def get_test_metrics(self):
         """Calculates and returns metrics for a validation run."""
-        assert not self.is_train, "This method should only be called during validation."
+        # assert not self.is_train, "This method should only be called during validation."
         assert len(self._completed_rollouts) == self._total_tasks_queued
 
         sample_stat_list = []
