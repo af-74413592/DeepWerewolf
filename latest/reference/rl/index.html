@@ -3719,22 +3719,22 @@ the original interface for compatibility with the RayPPOTrainer.</p>
 <a id="__codelineno-0-459" name="__codelineno-0-459"></a>        <span class="n">n_transition</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_ids_list</span><span class="p">)</span>
 <a id="__codelineno-0-460" name="__codelineno-0-460"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;***************************************&quot;</span><span class="p">,</span><span class="n">n_transition</span><span class="p">)</span>
 <a id="__codelineno-0-461" name="__codelineno-0-461"></a>
-<a id="__codelineno-0-462" name="__codelineno-0-462"></a>        <span class="c1"># # 直接扔掉多余的 transitions，限制最大数量</span>
-<a id="__codelineno-0-463" name="__codelineno-0-463"></a>        <span class="n">MAX_TRANSITIONS</span> <span class="o">=</span> <span class="mi">96</span> 
-<a id="__codelineno-0-464" name="__codelineno-0-464"></a>        <span class="k">if</span> <span class="n">n_transition</span> <span class="o">&gt;</span> <span class="n">MAX_TRANSITIONS</span><span class="p">:</span>
-<a id="__codelineno-0-465" name="__codelineno-0-465"></a>            <span class="c1"># 确保所有列表长度一致</span>
-<a id="__codelineno-0-466" name="__codelineno-0-466"></a>            <span class="n">input_ids_list</span> <span class="o">=</span> <span class="n">input_ids_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-467" name="__codelineno-0-467"></a>            <span class="n">input_attention_mask_list</span> <span class="o">=</span> <span class="n">input_attention_mask_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-468" name="__codelineno-0-468"></a>            <span class="n">response_ids_list</span> <span class="o">=</span> <span class="n">response_ids_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-469" name="__codelineno-0-469"></a>            <span class="n">response_attention_mask_list</span> <span class="o">=</span> <span class="n">response_attention_mask_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-470" name="__codelineno-0-470"></a>            <span class="n">reward_list</span> <span class="o">=</span> <span class="n">reward_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-471" name="__codelineno-0-471"></a>            <span class="n">data_id_list</span> <span class="o">=</span> <span class="n">data_id_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-472" name="__codelineno-0-472"></a>            <span class="n">rollout_id_list</span> <span class="o">=</span> <span class="n">rollout_id_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-473" name="__codelineno-0-473"></a>            <span class="n">turn_index_list</span> <span class="o">=</span> <span class="n">turn_index_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-474" name="__codelineno-0-474"></a>            <span class="n">is_drop_list</span> <span class="o">=</span> <span class="n">is_drop_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
+<a id="__codelineno-0-462" name="__codelineno-0-462"></a>        <span class="c1"># # 直接扔掉多余的 transitions，限制最大数量(会报错)</span>
+<a id="__codelineno-0-463" name="__codelineno-0-463"></a>        <span class="c1"># MAX_TRANSITIONS = 96 </span>
+<a id="__codelineno-0-464" name="__codelineno-0-464"></a>        <span class="c1"># if n_transition &gt; MAX_TRANSITIONS:</span>
+<a id="__codelineno-0-465" name="__codelineno-0-465"></a>        <span class="c1">#     # 确保所有列表长度一致</span>
+<a id="__codelineno-0-466" name="__codelineno-0-466"></a>        <span class="c1">#     input_ids_list = input_ids_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-467" name="__codelineno-0-467"></a>        <span class="c1">#     input_attention_mask_list = input_attention_mask_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-468" name="__codelineno-0-468"></a>        <span class="c1">#     response_ids_list = response_ids_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-469" name="__codelineno-0-469"></a>        <span class="c1">#     response_attention_mask_list = response_attention_mask_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-470" name="__codelineno-0-470"></a>        <span class="c1">#     reward_list = reward_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-471" name="__codelineno-0-471"></a>        <span class="c1">#     data_id_list = data_id_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-472" name="__codelineno-0-472"></a>        <span class="c1">#     rollout_id_list = rollout_id_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-473" name="__codelineno-0-473"></a>        <span class="c1">#     turn_index_list = turn_index_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-474" name="__codelineno-0-474"></a>        <span class="c1">#     is_drop_list = is_drop_list[:MAX_TRANSITIONS]</span>
 <a id="__codelineno-0-475" name="__codelineno-0-475"></a>
-<a id="__codelineno-0-476" name="__codelineno-0-476"></a>            <span class="n">n_transition</span> <span class="o">=</span> <span class="n">MAX_TRANSITIONS</span>
-<a id="__codelineno-0-477" name="__codelineno-0-477"></a>
+<a id="__codelineno-0-476" name="__codelineno-0-476"></a>        <span class="c1">#     n_transition = MAX_TRANSITIONS</span>
+<a id="__codelineno-0-477" name="__codelineno-0-477"></a>        <span class="c1">#     print(&quot;********************MAX_TRANSITIONS*******************&quot;,n_transition)</span>
 <a id="__codelineno-0-478" name="__codelineno-0-478"></a>        <span class="n">batch_input_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">input_ids_list</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
 <a id="__codelineno-0-479" name="__codelineno-0-479"></a>        <span class="n">input_attention_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">input_attention_mask_list</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
 <a id="__codelineno-0-480" name="__codelineno-0-480"></a>        <span class="n">batch_response_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">response_ids_list</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
@@ -4189,22 +4189,22 @@ truncation, and tensor creation for the PPO training loop.</p>
 <a id="__codelineno-0-459" name="__codelineno-0-459"></a>    <span class="n">n_transition</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_ids_list</span><span class="p">)</span>
 <a id="__codelineno-0-460" name="__codelineno-0-460"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;***************************************&quot;</span><span class="p">,</span><span class="n">n_transition</span><span class="p">)</span>
 <a id="__codelineno-0-461" name="__codelineno-0-461"></a>
-<a id="__codelineno-0-462" name="__codelineno-0-462"></a>    <span class="c1"># # 直接扔掉多余的 transitions，限制最大数量</span>
-<a id="__codelineno-0-463" name="__codelineno-0-463"></a>    <span class="n">MAX_TRANSITIONS</span> <span class="o">=</span> <span class="mi">96</span> 
-<a id="__codelineno-0-464" name="__codelineno-0-464"></a>    <span class="k">if</span> <span class="n">n_transition</span> <span class="o">&gt;</span> <span class="n">MAX_TRANSITIONS</span><span class="p">:</span>
-<a id="__codelineno-0-465" name="__codelineno-0-465"></a>        <span class="c1"># 确保所有列表长度一致</span>
-<a id="__codelineno-0-466" name="__codelineno-0-466"></a>        <span class="n">input_ids_list</span> <span class="o">=</span> <span class="n">input_ids_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-467" name="__codelineno-0-467"></a>        <span class="n">input_attention_mask_list</span> <span class="o">=</span> <span class="n">input_attention_mask_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-468" name="__codelineno-0-468"></a>        <span class="n">response_ids_list</span> <span class="o">=</span> <span class="n">response_ids_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-469" name="__codelineno-0-469"></a>        <span class="n">response_attention_mask_list</span> <span class="o">=</span> <span class="n">response_attention_mask_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-470" name="__codelineno-0-470"></a>        <span class="n">reward_list</span> <span class="o">=</span> <span class="n">reward_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-471" name="__codelineno-0-471"></a>        <span class="n">data_id_list</span> <span class="o">=</span> <span class="n">data_id_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-472" name="__codelineno-0-472"></a>        <span class="n">rollout_id_list</span> <span class="o">=</span> <span class="n">rollout_id_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-473" name="__codelineno-0-473"></a>        <span class="n">turn_index_list</span> <span class="o">=</span> <span class="n">turn_index_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
-<a id="__codelineno-0-474" name="__codelineno-0-474"></a>        <span class="n">is_drop_list</span> <span class="o">=</span> <span class="n">is_drop_list</span><span class="p">[:</span><span class="n">MAX_TRANSITIONS</span><span class="p">]</span>
+<a id="__codelineno-0-462" name="__codelineno-0-462"></a>    <span class="c1"># # 直接扔掉多余的 transitions，限制最大数量(会报错)</span>
+<a id="__codelineno-0-463" name="__codelineno-0-463"></a>    <span class="c1"># MAX_TRANSITIONS = 96 </span>
+<a id="__codelineno-0-464" name="__codelineno-0-464"></a>    <span class="c1"># if n_transition &gt; MAX_TRANSITIONS:</span>
+<a id="__codelineno-0-465" name="__codelineno-0-465"></a>    <span class="c1">#     # 确保所有列表长度一致</span>
+<a id="__codelineno-0-466" name="__codelineno-0-466"></a>    <span class="c1">#     input_ids_list = input_ids_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-467" name="__codelineno-0-467"></a>    <span class="c1">#     input_attention_mask_list = input_attention_mask_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-468" name="__codelineno-0-468"></a>    <span class="c1">#     response_ids_list = response_ids_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-469" name="__codelineno-0-469"></a>    <span class="c1">#     response_attention_mask_list = response_attention_mask_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-470" name="__codelineno-0-470"></a>    <span class="c1">#     reward_list = reward_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-471" name="__codelineno-0-471"></a>    <span class="c1">#     data_id_list = data_id_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-472" name="__codelineno-0-472"></a>    <span class="c1">#     rollout_id_list = rollout_id_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-473" name="__codelineno-0-473"></a>    <span class="c1">#     turn_index_list = turn_index_list[:MAX_TRANSITIONS]</span>
+<a id="__codelineno-0-474" name="__codelineno-0-474"></a>    <span class="c1">#     is_drop_list = is_drop_list[:MAX_TRANSITIONS]</span>
 <a id="__codelineno-0-475" name="__codelineno-0-475"></a>
-<a id="__codelineno-0-476" name="__codelineno-0-476"></a>        <span class="n">n_transition</span> <span class="o">=</span> <span class="n">MAX_TRANSITIONS</span>
-<a id="__codelineno-0-477" name="__codelineno-0-477"></a>
+<a id="__codelineno-0-476" name="__codelineno-0-476"></a>    <span class="c1">#     n_transition = MAX_TRANSITIONS</span>
+<a id="__codelineno-0-477" name="__codelineno-0-477"></a>    <span class="c1">#     print(&quot;********************MAX_TRANSITIONS*******************&quot;,n_transition)</span>
 <a id="__codelineno-0-478" name="__codelineno-0-478"></a>    <span class="n">batch_input_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">input_ids_list</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
 <a id="__codelineno-0-479" name="__codelineno-0-479"></a>    <span class="n">input_attention_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">input_attention_mask_list</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
 <a id="__codelineno-0-480" name="__codelineno-0-480"></a>    <span class="n">batch_response_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">response_ids_list</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
