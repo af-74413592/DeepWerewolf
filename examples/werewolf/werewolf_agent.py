@@ -311,10 +311,7 @@ async def create_player(role: str, NAME_TO_ROLE:  dict, ch_names: dict, moderato
     if random.random() < 0.8:
         agent = ReActAgent(
             name=name,
-            sys_prompt=Prompts.system_prompt.format(
-                player_name=name,
-                guidance=getattr(Prompts, f"notes_{role}"),
-            ),
+            sys_prompt=Prompts.system_prompt,
             # model=DashScopeChatModel(
             #     model_name="qwen3-max-preview",
             #     api_key=os.environ["DASHSCOPE_API_KEY"],
@@ -380,6 +377,7 @@ class WerewolfAgent(LitAgent):
             # if prompt_length >= 10240:  # 你的 max_prompt_length TODO: 过长上下文发送处理.拆掉上下文中的think
             #     print(f"WARNING: Prompt truncated! Original length: {prompt_length}")
             prompt = self.tokenizer.decode(prompt_ids)
+            # print(prompt)
             response = self.tokenizer.decode(response_ids)
             # print(response)
             # 检查是否包含 ValidationError 信息，先检测错误，再看后面是否有成功调用
@@ -388,8 +386,8 @@ class WerewolfAgent(LitAgent):
                 # 找到最后一个 </history> 标签的位置
                 history_end = prompt.rfind('</history>')
                 if history_end != -1:
-                    # 在最后一个 </history> 之前查找
-                    history_content = prompt[:history_end]
+                    # 在最后一个 </history> 之后查找
+                    history_content = prompt[history_end:]
                     
                     # 查找所有 ValidationError
                     error_matches = list(re.finditer(r'Arguments Validation Error: ([^<]+)', history_content))
