@@ -788,191 +788,57 @@ class WerewolfAgent(LitAgent):
                             )
                         
                         if exploded_agent:
-                            # 自爆了，处理自爆玩家的死亡逻辑
-                            dead_today = [exploded_agent.name]
-                            # 警长竞选阶段还没有警长，所以不需要检查警长死亡
-                            werewolves, villagers, seer, hunter, witch, guard, wolf_king, current_alive, full_werewolves =update_players(dead_today, werewolves, villagers, seer, hunter, witch, guard, wolf_king, current_alive, full_werewolves)
-
-                            # 设置第一次自爆打断警长竞选的标志
-                            first_explode_interrupted_election = True
-
                             # 检查胜利条件
                             res,wolf_win_flag = check_winning(current_alive, full_werewolves, NAME_TO_ROLE)
                             if res:
                                 await moderator(res)
                                 triplets = self._process_triplets_with_rewards(wolf_win_flag, NAME_TO_ROLE)
                                 return triplets
+                            
+                            #不要直接跳过，还有遗言和开枪，下面处理
 
-                            # 直接结束警长竞选，进入黑夜
-                            continue
-
-
-                        # 发言完毕后，投票前统一询问退水
-                        for agent in candidates:
-                            # 检查是否退水
-                            await agent.observe(
-                                await moderator(f"【仅{agent.name}可见】，你是否要退水（退出警长竞选）？"),
-                            )
-
-                            msg = await agent.reply(
-                                await moderator("请回复你的退水决定。"),
-                                structured_model=get_withdraw_model(),
-                            )
-
-                            if msg.metadata.get("withdraw", False):
-                                # 退水
-                                # 从first_day_candidates中移除
-                                if agent.name in first_day_candidates:
-                                    first_day_candidates.remove(agent.name)
-                                await all_players_hub.broadcast(
-                                    await moderator(f"{agent.name}选择退水，退出警长竞选。"),
+                        if not first_explode_interrupted_election:
+                            # 发言完毕后，投票前统一询问退水
+                            for agent in candidates:
+                                # 检查是否退水
+                                await agent.observe(
+                                    await moderator(f"【仅{agent.name}可见】，你是否要退水（退出警长竞选）？"),
                                 )
 
-                        # 检查是否还有活跃的候选人
-                        if not first_day_candidates:
-                            await all_players_hub.broadcast(
-                                await moderator("所有候选人都已退水，警徽流失。"),
-                            )
-                        else:
+                                msg = await agent.reply(
+                                    await moderator("请回复你的退水决定。"),
+                                    structured_model=get_withdraw_model(),
+                                )
 
-                            # 只有未上警的玩家可以投票
-                            voting_agents = [agent for agent in all_players_original_order if agent.name not in first_day_candidates]
+                                if msg.metadata.get("withdraw", False):
+                                    # 退水
+                                    # 从first_day_candidates中移除
+                                    if agent.name in first_day_candidates:
+                                        first_day_candidates.remove(agent.name)
+                                    await all_players_hub.broadcast(
+                                        await moderator(f"{agent.name}选择退水，退出警长竞选。"),
+                                    )
 
-                            if not voting_agents:
-                                # 全员上警，无人投票，警徽流失
+                            # 检查是否还有活跃的候选人
+                            if not first_day_candidates:
                                 await all_players_hub.broadcast(
-                                    await moderator("全员上警，无人可以投票，警徽流失。"),
+                                    await moderator("所有候选人都已退水，警徽流失。"),
                                 )
                             else:
-                                # 投票前检查自爆
-                                for agent in voting_agents:
-                                    # 检查是否自爆
-                                    if await handle_self_explode(agent, all_players_hub,moderator,NAME_TO_ROLE):
-                                        exploded_agent = agent
-                                        break
 
-                                # 如果有人自爆，直接结束警长竞选，进入黑夜
-                                if exploded_agent:
-                                    # 自爆了，处理自爆玩家的死亡逻辑
-                                    dead_today = [exploded_agent.name]
-                                    # 警长竞选阶段还没有警长，所以不需要检查警长死亡
-                                    werewolves, villagers, seer, hunter, witch, guard, wolf_king, current_alive, full_werewolves =update_players(dead_today, werewolves, villagers, seer, hunter, witch, guard, wolf_king, current_alive, full_werewolves)
+                                # 只有未上警的玩家可以投票
+                                voting_agents = [agent for agent in all_players_original_order if agent.name not in first_day_candidates]
 
-                                    # 设置第一次自爆打断警长竞选的标志
-                                    first_explode_interrupted_election = True
-
-                                    # 检查胜利条件
-                                    res,wolf_win_flag = check_winning(current_alive, full_werewolves, NAME_TO_ROLE)
-                                    if res:
-                                        await moderator(res)
-                                        triplets = self._process_triplets_with_rewards(wolf_win_flag, NAME_TO_ROLE)
-                                        return triplets
-
-                                    # 直接结束警长竞选，进入黑夜
-                                    continue
-
-                                # 将first_day_candidates转换为agent对象列表
-                                active_candidates = []
-                                for name in first_day_candidates:
-                                    for agent in all_players_original_order:
-                                        if agent.name == name:
-                                            active_candidates.append(agent)
-                                            break
-
-                                # Disable auto broadcast to avoid leaking info
-                                all_players_hub.set_auto_broadcast(False)
-
-                                await all_players_hub.broadcast(
-                                    await moderator(
-                                        Prompts.to_all_election_vote.format(names_to_str(active_candidates))),
-                                )
-
-                                msgs_election_vote = await fanout_pipeline(
-                                    voting_agents,
-                                    await moderator(
-                                        Prompts.to_all_election_vote.format(names_to_str(active_candidates))),
-                                    structured_model=get_sheriff_election_model(active_candidates),
-                                    enable_gather=False,
-                                )
-
-                                # 处理投票结果
-                                votes_list = [_.metadata.get("vote") for _ in msgs_election_vote]
-                                voters_list = [_.name for _ in msgs_election_vote]
-                                elected_sheriff, votes, is_tie = majority_vote(
-                                    votes_list, detailed=True, voters=voters_list
-                                )
-
-                                # await all_players_hub.broadcast(msgs_election_vote)
-
-                                if is_tie:
-                                    # 平票，进入PK环节
-                                    # Open the auto broadcast to enable discussion
-                                    all_players_hub.set_auto_broadcast(True)
-
-                                    tied_candidates = [candidate.name for candidate in active_candidates if
-                                                    candidate.name in elected_sheriff]
+                                if not voting_agents:
+                                    # 全员上警，无人投票，警徽流失
                                     await all_players_hub.broadcast(
-                                        await moderator(
-                                            Prompts.to_all_election_tie.format(votes, names_to_str(tied_candidates))),
+                                        await moderator("全员上警，无人可以投票，警徽流失。"),
                                     )
-
-                                    # PK发言
-                                    await all_players_hub.broadcast(
-                                        await moderator(
-                                            Prompts.to_all_election_pk.format(names_to_str(tied_candidates))),
-                                    )
-
-                                    pk_candidates = [agent for agent in active_candidates if
-                                                    agent.name in tied_candidates]
-
-                                    # 在警上PK发言过程中检查自爆
-                                    for agent in pk_candidates:
-                                        # 检查是否自爆
-                                        if await handle_self_explode(agent, all_players_hub, moderator, NAME_TO_ROLE):
-                                            exploded_agent = agent
-                                            break
-
-                                        # 正常发言
-                                        await agent(
-                                            await moderator(f"{agent.name}，请发言。"),
-                                        )
-
-                                    # 如果有人自爆，直接结束警长竞选，进入黑夜
-                                    if exploded_agent:
-                                        # 自爆了，处理自爆玩家的死亡逻辑
-                                        dead_today = [exploded_agent.name]
-                                        # 警长竞选阶段还没有警长，所以不需要检查警长死亡
-                                        werewolves, villagers, seer, hunter, witch, guard, wolf_king, current_alive, full_werewolves = update_players(
-                                            dead_today, werewolves, villagers, seer, hunter, witch, guard, wolf_king,
-                                            current_alive, full_werewolves)
-
-                                        # 设置第一次自爆打断警长竞选的标志
-                                        first_explode_interrupted_election = True
-
-                                        # 检查胜利条件
-                                        res,wolf_win_flag = check_winning(current_alive, full_werewolves, NAME_TO_ROLE)
-                                        if res:
-                                            await moderator(res)
-                                            triplets = self._process_triplets_with_rewards(wolf_win_flag, NAME_TO_ROLE)
-                                            return triplets
-
-                                        # 直接结束警长竞选，进入黑夜
-                                        continue
-                                    await sequential_pipeline(pk_candidates)
-                                    # PK投票
-                                    await all_players_hub.broadcast(
-                                        await moderator(
-                                            Prompts.to_all_election_pk_vote.format(names_to_str(tied_candidates))),
-                                    )
-
-                                    # PK环节：除了PK台上的玩家，其他所有玩家都可以投票（包括上警的玩家）
-                                    voting_agents = [agent for agent in current_alive if
-                                                    agent.name not in tied_candidates]
-
+                                else:
                                     # 投票前检查自爆
                                     for agent in voting_agents:
                                         # 检查是否自爆
-                                        if await handle_self_explode(agent, all_players_hub, moderator, NAME_TO_ROLE):
+                                        if await handle_self_explode(agent, all_players_hub,moderator,NAME_TO_ROLE):
                                             exploded_agent = agent
                                             break
 
@@ -981,9 +847,7 @@ class WerewolfAgent(LitAgent):
                                         # 自爆了，处理自爆玩家的死亡逻辑
                                         dead_today = [exploded_agent.name]
                                         # 警长竞选阶段还没有警长，所以不需要检查警长死亡
-                                        werewolves, villagers, seer, hunter, witch, guard, wolf_king, current_alive, full_werewolves = update_players(
-                                            dead_today, werewolves, villagers, seer, hunter, witch, guard, wolf_king,
-                                            current_alive, full_werewolves)
+                                        werewolves, villagers, seer, hunter, witch, guard, wolf_king, current_alive, full_werewolves =update_players(dead_today, werewolves, villagers, seer, hunter, witch, guard, wolf_king, current_alive, full_werewolves)
 
                                         # 设置第一次自爆打断警长竞选的标志
                                         first_explode_interrupted_election = True
@@ -995,72 +859,194 @@ class WerewolfAgent(LitAgent):
                                             triplets = self._process_triplets_with_rewards(wolf_win_flag, NAME_TO_ROLE)
                                             return triplets
 
-                                        # 直接结束警长竞选，进入黑夜
-                                        continue
+                                    if not first_explode_interrupted_election:
+                                        # 将first_day_candidates转换为agent对象列表
+                                        active_candidates = []
+                                        for name in first_day_candidates:
+                                            for agent in all_players_original_order:
+                                                if agent.name == name:
+                                                    active_candidates.append(agent)
+                                                    break
 
-                                    # Disable auto broadcast to avoid leaking info
-                                    all_players_hub.set_auto_broadcast(False)
+                                        # Disable auto broadcast to avoid leaking info
+                                        all_players_hub.set_auto_broadcast(False)
 
-                                    await all_players_hub.broadcast(
-                                        await moderator(
-                                            Prompts.to_all_election_pk_vote.format(names_to_str(tied_candidates))),
-                                    )
-
-                                    msgs_pk_vote = await fanout_pipeline(
-                                        voting_agents,
-                                        await moderator(
-                                            Prompts.to_all_election_pk_vote.format(names_to_str(tied_candidates))),
-                                        structured_model=get_sheriff_election_model(pk_candidates),
-                                        enable_gather=False,
-                                    )
-
-                                    # 处理PK投票结果
-                                    pk_votes_list = [_.metadata.get("vote") for _ in msgs_pk_vote]
-                                    pk_voters_list = [_.name for _ in msgs_pk_vote]
-                                    pk_result, pk_votes, pk_is_tie = majority_vote(
-                                        pk_votes_list, detailed=True, voters=pk_voters_list
-                                    )
-
-                                    # await all_players_hub.broadcast(msgs_pk_vote)
-
-                                    if pk_is_tie:
-                                        # PK也平票，警徽流失
-                                        await all_players_hub.broadcast(
-                                            await moderator(Prompts.to_all_election_pk_tie.format(pk_votes,
-                                                                                                names_to_str(
-                                                                                                    tied_candidates))),
-                                        )
-                                    else:
-                                        # PK有结果
-                                        sheriff = pk_result
-                                        sheriff_has_badge = True
                                         await all_players_hub.broadcast(
                                             await moderator(
-                                                Prompts.to_all_election_pk_result.format(pk_votes, sheriff)),
+                                                Prompts.to_all_election_vote.format(names_to_str(active_candidates))),
                                         )
-                                        # 警长选择发言顺序
-                                        sheriff_speaking_direction = await choose_sheriff_speaking_order(
-                                            all_players_hub, sheriff, moderator, sheriff_speaking_direction,current_alive)
-                                else:
-                                    # 有明确结果
-                                    if elected_sheriff and elected_sheriff != "弃票":
-                                        sheriff = elected_sheriff
-                                        sheriff_has_badge = True
-                                        await all_players_hub.broadcast(
-                                            await moderator(Prompts.to_all_election_result.format(sheriff, votes)),
+
+                                        msgs_election_vote = await fanout_pipeline(
+                                            voting_agents,
+                                            await moderator(
+                                                Prompts.to_all_election_vote.format(names_to_str(active_candidates))),
+                                            structured_model=get_sheriff_election_model(active_candidates),
+                                            enable_gather=False,
                                         )
-                                        # 警长选择发言顺序
-                                        sheriff_speaking_direction = await choose_sheriff_speaking_order(
-                                            all_players_hub, sheriff, moderator, sheriff_speaking_direction,current_alive)
-                                    else:
-                                        # 所有人弃票，警徽流失
-                                        await all_players_hub.broadcast(
-                                            await moderator("所有人弃票，警徽流失。"),
+
+                                        # 处理投票结果
+                                        votes_list = [_.metadata.get("vote") for _ in msgs_election_vote]
+                                        voters_list = [_.name for _ in msgs_election_vote]
+                                        elected_sheriff, votes, is_tie = majority_vote(
+                                            votes_list, detailed=True, voters=voters_list
                                         )
+
+                                        # await all_players_hub.broadcast(msgs_election_vote)
+
+                                        if is_tie:
+                                            # 平票，进入PK环节
+                                            # Open the auto broadcast to enable discussion
+                                            all_players_hub.set_auto_broadcast(True)
+
+                                            tied_candidates = [candidate.name for candidate in active_candidates if
+                                                            candidate.name in elected_sheriff]
+                                            await all_players_hub.broadcast(
+                                                await moderator(
+                                                    Prompts.to_all_election_tie.format(votes, names_to_str(tied_candidates))),
+                                            )
+
+                                            # PK发言
+                                            await all_players_hub.broadcast(
+                                                await moderator(
+                                                    Prompts.to_all_election_pk.format(names_to_str(tied_candidates))),
+                                            )
+
+                                            pk_candidates = [agent for agent in active_candidates if
+                                                            agent.name in tied_candidates]
+
+                                            # 在警上PK发言过程中检查自爆
+                                            for agent in pk_candidates:
+                                                # 检查是否自爆
+                                                if await handle_self_explode(agent, all_players_hub, moderator, NAME_TO_ROLE):
+                                                    exploded_agent = agent
+                                                    break
+
+                                                # 正常发言
+                                                await agent(
+                                                    await moderator(f"{agent.name}，请发言。"),
+                                                )
+
+                                            # 如果有人自爆，直接结束警长竞选，进入黑夜
+                                            if exploded_agent:
+                                                # 自爆了，处理自爆玩家的死亡逻辑
+                                                dead_today = [exploded_agent.name]
+                                                # 警长竞选阶段还没有警长，所以不需要检查警长死亡
+                                                werewolves, villagers, seer, hunter, witch, guard, wolf_king, current_alive, full_werewolves = update_players(
+                                                    dead_today, werewolves, villagers, seer, hunter, witch, guard, wolf_king,
+                                                    current_alive, full_werewolves)
+
+                                                # 设置第一次自爆打断警长竞选的标志
+                                                first_explode_interrupted_election = True
+
+                                                # 检查胜利条件
+                                                res,wolf_win_flag = check_winning(current_alive, full_werewolves, NAME_TO_ROLE)
+                                                if res:
+                                                    await moderator(res)
+                                                    triplets = self._process_triplets_with_rewards(wolf_win_flag, NAME_TO_ROLE)
+                                                    return triplets
+                                                
+                                            if not first_explode_interrupted_election:
+                                                await sequential_pipeline(pk_candidates)
+                                                # PK投票
+                                                await all_players_hub.broadcast(
+                                                    await moderator(
+                                                        Prompts.to_all_election_pk_vote.format(names_to_str(tied_candidates))),
+                                                )
+
+                                                # PK环节：除了PK台上的玩家，其他所有玩家都可以投票（包括上警的玩家）
+                                                voting_agents = [agent for agent in current_alive if
+                                                                agent.name not in tied_candidates]
+
+                                                # 投票前检查自爆
+                                                for agent in voting_agents:
+                                                    # 检查是否自爆
+                                                    if await handle_self_explode(agent, all_players_hub, moderator, NAME_TO_ROLE):
+                                                        exploded_agent = agent
+                                                        break
+
+                                                # 如果有人自爆，直接结束警长竞选，进入黑夜
+                                                if exploded_agent:
+                                                    # 自爆了，处理自爆玩家的死亡逻辑
+                                                    dead_today = [exploded_agent.name]
+                                                    # 警长竞选阶段还没有警长，所以不需要检查警长死亡
+                                                    werewolves, villagers, seer, hunter, witch, guard, wolf_king, current_alive, full_werewolves = update_players(
+                                                        dead_today, werewolves, villagers, seer, hunter, witch, guard, wolf_king,
+                                                        current_alive, full_werewolves)
+
+                                                    # 设置第一次自爆打断警长竞选的标志
+                                                    first_explode_interrupted_election = True
+
+                                                    # 检查胜利条件
+                                                    res,wolf_win_flag = check_winning(current_alive, full_werewolves, NAME_TO_ROLE)
+                                                    if res:
+                                                        await moderator(res)
+                                                        triplets = self._process_triplets_with_rewards(wolf_win_flag, NAME_TO_ROLE)
+                                                        return triplets
+
+                                                if not first_explode_interrupted_election:
+                                                    # Disable auto broadcast to avoid leaking info
+                                                    all_players_hub.set_auto_broadcast(False)
+
+                                                    await all_players_hub.broadcast(
+                                                        await moderator(
+                                                            Prompts.to_all_election_pk_vote.format(names_to_str(tied_candidates))),
+                                                    )
+
+                                                    msgs_pk_vote = await fanout_pipeline(
+                                                        voting_agents,
+                                                        await moderator(
+                                                            Prompts.to_all_election_pk_vote.format(names_to_str(tied_candidates))),
+                                                        structured_model=get_sheriff_election_model(pk_candidates),
+                                                        enable_gather=False,
+                                                    )
+
+                                                    # 处理PK投票结果
+                                                    pk_votes_list = [_.metadata.get("vote") for _ in msgs_pk_vote]
+                                                    pk_voters_list = [_.name for _ in msgs_pk_vote]
+                                                    pk_result, pk_votes, pk_is_tie = majority_vote(
+                                                        pk_votes_list, detailed=True, voters=pk_voters_list
+                                                    )
+
+                                                    # await all_players_hub.broadcast(msgs_pk_vote)
+
+                                                    if pk_is_tie:
+                                                        # PK也平票，警徽流失
+                                                        await all_players_hub.broadcast(
+                                                            await moderator(Prompts.to_all_election_pk_tie.format(pk_votes,
+                                                                                                                names_to_str(
+                                                                                                                    tied_candidates))),
+                                                        )
+                                                    else:
+                                                        # PK有结果
+                                                        sheriff = pk_result
+                                                        sheriff_has_badge = True
+                                                        await all_players_hub.broadcast(
+                                                            await moderator(
+                                                                Prompts.to_all_election_pk_result.format(pk_votes, sheriff)),
+                                                        )
+                                                        # 警长选择发言顺序
+                                                        sheriff_speaking_direction = await choose_sheriff_speaking_order(
+                                                            all_players_hub, sheriff, moderator, sheriff_speaking_direction,current_alive)
+                                                else:
+                                                    # 有明确结果
+                                                    if elected_sheriff and elected_sheriff != "弃票":
+                                                        sheriff = elected_sheriff
+                                                        sheriff_has_badge = True
+                                                        await all_players_hub.broadcast(
+                                                            await moderator(Prompts.to_all_election_result.format(sheriff, votes)),
+                                                        )
+                                                        # 警长选择发言顺序
+                                                        sheriff_speaking_direction = await choose_sheriff_speaking_order(
+                                                            all_players_hub, sheriff, moderator, sheriff_speaking_direction,current_alive)
+                                                    else:
+                                                        # 所有人弃票，警徽流失
+                                                        await all_players_hub.broadcast(
+                                                            await moderator("所有人弃票，警徽流失。"),
+                                                        )
 
                 if round_num == 1 and first_explode_interrupted_election:
                     """第二天直接投票选举警长（双爆吞警徽逻辑）"""
-
+                    second_explode_interrupted_election = False
                     # 获取第一天的上警玩家（还活着的）
                     alive_candidates = []
                     for name in first_day_candidates:
@@ -1117,7 +1103,7 @@ class WerewolfAgent(LitAgent):
                                 werewolves, villagers, seer, hunter, witch, guard, wolf_king, current_alive, full_werewolves = update_players(
                                     dead_today, werewolves, villagers, seer, hunter, witch, guard, wolf_king,
                                     current_alive, full_werewolves)
-
+                                second_explode_interrupted_election = True
                                 # 检查胜利条件
                                 res,wolf_win_flag = check_winning(current_alive, full_werewolves, NAME_TO_ROLE)
                                 if res:
@@ -1128,59 +1114,58 @@ class WerewolfAgent(LitAgent):
                                 await all_players_hub.broadcast(
                                     await moderator("双爆吞警徽！警徽流失，游戏继续。"),
                                 )
-                                continue
+                            if not second_explode_interrupted_election:
+                                # 投票玩家排除候选
+                                voting_agents = [agent for agent in current_alive if agent.name not in alive_candidates]
 
-                            # 投票玩家排除候选
-                            voting_agents = [agent for agent in current_alive if agent.name not in alive_candidates]
-
-                            # 让所有玩家直接投票选举警长
-                            msgs_election_vote = await fanout_pipeline(
-                                voting_agents,
-                                await moderator("请所有玩家直接投票选举警长。"),
-                                structured_model=get_sheriff_election_model(alive_candidates),
-                                enable_gather=False,
-                            )
-
-                            # 处理投票结果
-                            votes_list = [_.metadata.get("vote") for _ in msgs_election_vote]
-                            # votes = {name: votes_list.count(name) for name in set(votes_list)}
-                            voters_list = [_.name for _ in msgs_election_vote]
-
-                            # 没有自爆，正常处理投票结果
-                            elected_sheriff, votes, is_tie = majority_vote(
-                                votes_list, detailed=True, voters=voters_list
-                            )
-
-                            if is_tie:
-                                tied_candidates = [candidate.name for candidate in alive_candidates if
-                                                candidate.name in elected_sheriff]
-                                await all_players_hub.broadcast(
-                                    await moderator(
-                                        Prompts.to_all_election_tie.format(votes, names_to_str(tied_candidates))),
+                                # 让所有玩家直接投票选举警长
+                                msgs_election_vote = await fanout_pipeline(
+                                    voting_agents,
+                                    await moderator("请所有玩家直接投票选举警长。"),
+                                    structured_model=get_sheriff_election_model(alive_candidates),
+                                    enable_gather=False,
                                 )
 
-                                await all_players_hub.broadcast(
-                                    await moderator(f"第二天警长选举平票，不再有PK环节，警徽流失。"),
+                                # 处理投票结果
+                                votes_list = [_.metadata.get("vote") for _ in msgs_election_vote]
+                                # votes = {name: votes_list.count(name) for name in set(votes_list)}
+                                voters_list = [_.name for _ in msgs_election_vote]
+
+                                # 没有自爆，正常处理投票结果
+                                elected_sheriff, votes, is_tie = majority_vote(
+                                    votes_list, detailed=True, voters=voters_list
                                 )
 
-                            else:
-                                # 有明确结果
-                                if elected_sheriff and elected_sheriff != "弃票":
-                                    sheriff = elected_sheriff
-                                    sheriff_has_badge = True
+                                if is_tie:
+                                    tied_candidates = [candidate.name for candidate in alive_candidates if
+                                                    candidate.name in elected_sheriff]
                                     await all_players_hub.broadcast(
-                                        await moderator(Prompts.to_all_election_result.format(sheriff, votes)),
+                                        await moderator(
+                                            Prompts.to_all_election_tie.format(votes, names_to_str(tied_candidates))),
                                     )
-                                    # 警长选择发言顺序
-                                    sheriff_speaking_direction = await choose_sheriff_speaking_order(all_players_hub,
-                                                                                                    sheriff, moderator,
-                                                                                                    sheriff_speaking_direction,
-                                                                                                    current_alive)
+
+                                    await all_players_hub.broadcast(
+                                        await moderator(f"第二天警长选举平票，不再有PK环节，警徽流失。"),
+                                    )
+
                                 else:
-                                    # 所有人弃票，警徽流失
-                                    await all_players_hub.broadcast(
-                                        await moderator("所有人弃票，警徽流失。"),
-                                    )
+                                    # 有明确结果
+                                    if elected_sheriff and elected_sheriff != "弃票":
+                                        sheriff = elected_sheriff
+                                        sheriff_has_badge = True
+                                        await all_players_hub.broadcast(
+                                            await moderator(Prompts.to_all_election_result.format(sheriff, votes)),
+                                        )
+                                        # 警长选择发言顺序
+                                        sheriff_speaking_direction = await choose_sheriff_speaking_order(all_players_hub,
+                                                                                                        sheriff, moderator,
+                                                                                                        sheriff_speaking_direction,
+                                                                                                        current_alive)
+                                    else:
+                                        # 所有人弃票，警徽流失
+                                        await all_players_hub.broadcast(
+                                            await moderator("所有人弃票，警徽流失。"),
+                                        )
                 # Day phase - 死讯公布（在警长竞选之后）
                 if len([_ for _ in dead_tonight if _]) > 0:
                     await all_players_hub.broadcast(
@@ -1276,7 +1261,7 @@ class WerewolfAgent(LitAgent):
                 # 重新排列发言顺序（使用包含开枪的死亡列表）
                 dead_tonight = dead_tonight_with_shots
                 if exploded_agent and dead_today:
-                    # 如果有人自爆，直接进入黑夜
+                    # 如果之前有人自爆，直接进入黑夜
                     # 检查是否有警长死亡，如果有则处理警徽传递
                     dead_sheriff = None
                     if sheriff and sheriff in dead_today:
