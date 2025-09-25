@@ -24,7 +24,7 @@ python -m agentlightning.verl \
     actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1 \
     actor_rollout_ref.rollout.multi_turn.format=hermes \
     actor_rollout_ref.model.path=${BASE_MODEL} \
-    data.max_prompt_length=12288 \
+    data.max_prompt_length=11264 \
     data.max_response_length=1024 \
     data.truncation='error' \
     trainer.val_before_train=True \
@@ -47,10 +47,10 @@ python -m agentlightning.verl \
     trainer.rollout_data_dir='/root/dataDisk/rollout' \
     trainer.resume_mode=auto \
     trainer.critic_warmup=0 \
-    trainer.logger=['console','wandb'] \
+    trainer.logger=['console','tensorboard'] \
     trainer.project_name=${PROJECT_NAME} \
     trainer.experiment_name=${EXPERIMENT_NAME} \
     trainer.nnodes=1 \
-    trainer.save_freq=5 \
+    trainer.save_freq=1 \
     trainer.test_freq=0 \
     trainer.total_epochs=1 $@

@@ -225,35 +225,39 @@ class AgentRunner(ParallelWorkerBase):
             return False
 
         rollout_obj = Rollout(rollout_id=task.rollout_id)  # Default empty rollout
-
         try:
-            try:
-                self.agent.on_rollout_start(task, self, self.tracer)
-            except Exception:
-                logger.exception(f"{self._log_prefix(rollout_id)} Exception during on_rollout_start hook.")
-
-            with self.tracer.trace_context(name=f"rollout_{rollout_id}"):
-                start_time = time.time()
-                rollout_method = (
-                    self.agent.training_rollout_async if task.mode == "train" else self.agent.validation_rollout_async
-                )
-                # Pass the task input, not the whole task object
-                result = await rollout_method(task.input, task.rollout_id, resources_update.resources)
-                rollout_obj = self._to_rollout_object(result, task.rollout_id)
-                end_time = time.time()
-                logger.info(
-                    f"{self._log_prefix(rollout_id)} Completed in "
-                    f"{end_time - start_time:.2f}s. Reward: {rollout_obj.final_reward}"
-                )
+            self.agent.on_rollout_start(task, self, self.tracer)
         except Exception:
-            logger.exception(f"{self._log_prefix(rollout_id)} Exception during rollout.")
-        finally:
+            logger.exception(f"{self._log_prefix(rollout_id)} Exception during on_rollout_start hook.")
+        MAX_TRY=3
+        while MAX_TRY > 0:
             try:
-                self.agent.on_rollout_end(task, rollout_obj, self, self.tracer)
+                with self.tracer.trace_context(name=f"rollout_{rollout_id}"):
+                    start_time = time.time()
+                    rollout_method = (
+                        self.agent.training_rollout_async if task.mode == "train" else self.agent.validation_rollout_async
+                    )
+                    # Pass the task input, not the whole task object
+                    result = await rollout_method(task.input, task.rollout_id, resources_update.resources)
+                    rollout_obj = self._to_rollout_object(result, task.rollout_id)
+                    end_time = time.time()
+                    logger.info(
+                        f"{self._log_prefix(rollout_id)} Completed in "
+                        f"{end_time - start_time:.2f}s. Reward: {rollout_obj.final_reward}"
+                    )
+                    break
             except Exception:
-                logger.exception(f"{self._log_prefix(rollout_id)} Exception during on_rollout_end hook.")
-            await self.client.post_rollout_async(rollout_obj)
-
+                logger.exception(f"{self._log_prefix(rollout_id)} Exception during rollout.")
+                MAX_TRY = MAX_TRY - 1
+            finally:
+                if rollout_obj.triplets:
+                    try:
+                        self.agent.on_rollout_end(task, rollout_obj, self, self.tracer)
+                    except Exception:
+                        logger.exception(f"{self._log_prefix(rollout_id)} Exception during on_rollout_end hook.")
+                    await self.client.post_rollout_async(rollout_obj)
+                else:
+                    raise Exception("rollout_obj.triplets is EMPTY")
         return True
 
     async def iter_async(self) -> int:
