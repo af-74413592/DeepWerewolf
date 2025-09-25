@@ -1,4 +1,5 @@
-
+#训练脚本：example/werewolf/train.sh
+#客户端: python werewolf_agent.py
 
 基于agent-lightning（5724f63cfc75bcc2f4fb56958ef384d307717c18，Sep 13, 2025）
 https://github.com/microsoft/agent-lightning
@@ -8,6 +9,15 @@ https://github.com/microsoft/agent-lightning
 if trace_spans: 
         triplets = self.triplet_exporter.export(trace_spans)
 ```
+
+run_async函数加了重试，其中
+```
+if len(result) > 80:
+        import random
+        result = random.sample(result,80)
+```
+是为了减少最大rollout以防止报错
+
 agentlightning/verl/daemon.py 338行
 ```
 trace_list = [
