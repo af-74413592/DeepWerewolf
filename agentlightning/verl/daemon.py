@@ -459,22 +459,22 @@ class AgentModeDaemon:
         n_transition = len(input_ids_list)
         print("***************************************",n_transition)
 
-        # # 直接扔掉多余的 transitions，限制最大数量
-        MAX_TRANSITIONS = 96 
-        if n_transition > MAX_TRANSITIONS:
-            # 确保所有列表长度一致
-            input_ids_list = input_ids_list[:MAX_TRANSITIONS]
-            input_attention_mask_list = input_attention_mask_list[:MAX_TRANSITIONS]
-            response_ids_list = response_ids_list[:MAX_TRANSITIONS]
-            response_attention_mask_list = response_attention_mask_list[:MAX_TRANSITIONS]
-            reward_list = reward_list[:MAX_TRANSITIONS]
-            data_id_list = data_id_list[:MAX_TRANSITIONS]
-            rollout_id_list = rollout_id_list[:MAX_TRANSITIONS]
-            turn_index_list = turn_index_list[:MAX_TRANSITIONS]
-            is_drop_list = is_drop_list[:MAX_TRANSITIONS]
+        # # 直接扔掉多余的 transitions，限制最大数量(会报错)
+        # MAX_TRANSITIONS = 96 
+        # if n_transition > MAX_TRANSITIONS:
+        #     # 确保所有列表长度一致
+        #     input_ids_list = input_ids_list[:MAX_TRANSITIONS]
+        #     input_attention_mask_list = input_attention_mask_list[:MAX_TRANSITIONS]
+        #     response_ids_list = response_ids_list[:MAX_TRANSITIONS]
+        #     response_attention_mask_list = response_attention_mask_list[:MAX_TRANSITIONS]
+        #     reward_list = reward_list[:MAX_TRANSITIONS]
+        #     data_id_list = data_id_list[:MAX_TRANSITIONS]
+        #     rollout_id_list = rollout_id_list[:MAX_TRANSITIONS]
+        #     turn_index_list = turn_index_list[:MAX_TRANSITIONS]
+        #     is_drop_list = is_drop_list[:MAX_TRANSITIONS]
             
-            n_transition = MAX_TRANSITIONS
-
+        #     n_transition = MAX_TRANSITIONS
+        #     print("********************MAX_TRANSITIONS*******************",n_transition)
         batch_input_ids = torch.LongTensor(input_ids_list).to(device)
         input_attention_mask = torch.LongTensor(input_attention_mask_list).to(device)
         batch_response_ids = torch.LongTensor(response_ids_list).to(device)
