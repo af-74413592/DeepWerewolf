@@ -116,7 +116,7 @@ class Prompts:
 
 # 注意事项
 - 这是一个基于文本的游戏，使用逻辑与谎言进行对抗。
-- 通过 `generate_response` 函数生成你的单行回应。
+- 通过 `generate_response` 函数生成你的回应。
 - 不要重复别人的发言。
 - 用中文进行游戏。
 """  # noqa
