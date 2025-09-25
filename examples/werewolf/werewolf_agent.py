@@ -351,7 +351,7 @@ async def create_player(role: str, NAME_TO_ROLE:  dict, ch_names: dict, moderato
 
     await agent.observe(
         await moderator(
-            f"[{name} ONLY] {name}, 你的角色是 {ch_names[role]}.\n\n{role_notes}",
+            f"[{name} ONLY] 你是{name}, 你的角色是 {ch_names[role]}.\n\n{role_notes}",
         ),
     )
     return agent, NAME_TO_ROLE, candidate_names

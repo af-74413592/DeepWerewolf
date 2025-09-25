@@ -240,9 +240,9 @@ class AgentRunner(ParallelWorkerBase):
                     # Pass the task input, not the whole task object
                     result = await rollout_method(task.input, task.rollout_id, resources_update.resources)
                     #降低最大rollout
-                    if len(result) > 80:
+                    if len(result) > 64:
                         import random
-                        result = random.sample(result,80)
+                        result = random.sample(result,64)
                     rollout_obj = self._to_rollout_object(result, task.rollout_id)
                     end_time = time.time()
                     logger.info(
