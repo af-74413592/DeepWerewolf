@@ -261,8 +261,7 @@ class AgentRunner(ParallelWorkerBase):
                         logger.exception(f"{self._log_prefix(rollout_id)} Exception during on_rollout_end hook.")
                     await self.client.post_rollout_async(rollout_obj)
                 else:
-                    if MAX_TRY == 0:
-                        raise Exception("rollout_obj.triplets is EMPTY")
+                    raise Exception("rollout_obj.triplets is EMPTY")
         return True
 
     async def iter_async(self) -> int:
