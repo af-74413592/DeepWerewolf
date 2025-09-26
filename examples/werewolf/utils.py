@@ -15,9 +15,9 @@ MAX_DISCUSSION_ROUND = 3
 
 # candidate_names = ["1号", "2号", "3号", "4号", "5号", "6号", "7号", "8号", "9号", "10号","11号","12号"]
 
-def get_player_name(candidate_names) -> str:
+def get_player_name(agent_names) -> str:
     """Generate player name."""
-    return candidate_names.pop(np.random.randint(len(candidate_names)))
+    return agent_names.pop(np.random.randint(len(agent_names)))
 
 
 def check_winning(

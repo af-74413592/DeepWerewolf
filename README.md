@@ -79,7 +79,7 @@ input_ids = self.tokenizer.apply_chat_template(
 )
 
 while len(input_ids) > 10000: （比maxlen稍微小一点）
-        messages[1]["content"][0]['text'] = messages[1]["content"][0]['text'][:150] + messages[1]["content"][0]['text'][200:]
+        messages[1]["content"][0]['text'] = messages[1]["content"][0]['text'][:150] + '\n...\n' + messages[1]["content"][0]['text'][200:]
         conversations = [{"role":msg["role"], "content":msg["content"][0]['text'] if type(msg["content"]) == list else msg["content"]} for msg in messages]
         input_ids = self.tokenizer.apply_chat_template(
         conversations,

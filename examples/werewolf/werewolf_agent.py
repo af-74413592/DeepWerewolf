@@ -302,9 +302,9 @@ def update_players(dead_players: list[str], werewolves: list[ReActAgent], villag
     return werewolves, villagers, seer, hunter, witch, guard, wolf_king, current_alive, full_werewolves
 
 
-async def create_player(role: str, NAME_TO_ROLE:  dict, ch_names: dict, moderator: EchoAgent, candidate_names: list[str], llm: agentlightning.LLM) -> tuple:
+async def create_player(role: str, NAME_TO_ROLE:  dict, ch_names: dict, moderator: EchoAgent, agent_names: list[str], llm: agentlightning.LLM) -> tuple:
     """Create a player with the given name and role."""
-    name = get_player_name(candidate_names)
+    name = get_player_name(agent_names)
     NAME_TO_ROLE[name] = role
     #添加外部对抗性
     import random
@@ -354,7 +354,7 @@ async def create_player(role: str, NAME_TO_ROLE:  dict, ch_names: dict, moderato
             f"[{name} ONLY] 你是{name}, 你的角色是 {ch_names[role]}.\n\n{role_notes}",
         ),
     )
-    return agent, NAME_TO_ROLE, candidate_names
+    return agent, NAME_TO_ROLE, agent_names
 
 class WerewolfAgent(LitAgent):
     def __init__(self, trained_agents: str | None = None) -> None:
@@ -432,7 +432,7 @@ class WerewolfAgent(LitAgent):
         # )
         start_time = time.time()
         llm: agentlightning.LLM = resources["main_llm"]
-        candidate_names = ["1号", "2号", "3号", "4号", "5号", "6号", "7号", "8号", "9号", "10号","11号","12号"]
+        agent_names = ["1号", "2号", "3号", "4号", "5号", "6号", "7号", "8号", "9号", "10号","11号","12号"]
         NAME_TO_ROLE = {}
         moderator = EchoAgent()
         healing, poison = True, True
@@ -455,26 +455,26 @@ class WerewolfAgent(LitAgent):
         # Create players
         # villagers = [await create_player("villager") for _ in range(4)]
         for _ in range(4):
-            a, NAME_TO_ROLE,candidate_names = await create_player("villager", NAME_TO_ROLE, ch_names, moderator, candidate_names, llm)
+            a, NAME_TO_ROLE,agent_names = await create_player("villager", NAME_TO_ROLE, ch_names, moderator, agent_names, llm)
             villagers.append(a)
         # werewolves = [await create_player("werewolf") for _ in range(3)]
         for _ in range(3):
-            a, NAME_TO_ROLE,candidate_names = await create_player("werewolf", NAME_TO_ROLE, ch_names, moderator, candidate_names, llm)
+            a, NAME_TO_ROLE,agent_names = await create_player("werewolf", NAME_TO_ROLE, ch_names, moderator, agent_names, llm)
             werewolves.append(a)
         # seer = [await create_player("seer")]
-        a, NAME_TO_ROLE,candidate_names = await create_player("seer", NAME_TO_ROLE, ch_names, moderator,candidate_names, llm)
+        a, NAME_TO_ROLE,agent_names = await create_player("seer", NAME_TO_ROLE, ch_names, moderator,agent_names, llm)
         seer.append(a)
         # witch = [await create_player("witch")]
-        a, NAME_TO_ROLE,candidate_names = await create_player("witch", NAME_TO_ROLE, ch_names, moderator,candidate_names, llm)
+        a, NAME_TO_ROLE,agent_names = await create_player("witch", NAME_TO_ROLE, ch_names, moderator,agent_names, llm)
         witch.append(a)
         # hunter = [await create_player("hunter")]
-        a, NAME_TO_ROLE,candidate_names = await create_player("hunter", NAME_TO_ROLE, ch_names, moderator,candidate_names, llm)
+        a, NAME_TO_ROLE,agent_names = await create_player("hunter", NAME_TO_ROLE, ch_names, moderator,agent_names, llm)
         hunter.append(a)
         # guard = [await create_player("guard")]
-        a, NAME_TO_ROLE,candidate_names = await create_player("guard", NAME_TO_ROLE, ch_names, moderator,candidate_names, llm)
+        a, NAME_TO_ROLE,agent_names = await create_player("guard", NAME_TO_ROLE, ch_names, moderator,agent_names, llm)
         guard.append(a)
         # wolf_king = [await create_player("wolf_king")]
-        a , NAME_TO_ROLE,candidate_names = await create_player("wolf_king", NAME_TO_ROLE, ch_names, moderator,candidate_names, llm)
+        a , NAME_TO_ROLE,agent_names = await create_player("wolf_king", NAME_TO_ROLE, ch_names, moderator,agent_names, llm)
         wolf_king.append(a)
         # Speak in order of names
         current_alive = sorted(
@@ -1114,7 +1114,7 @@ class WerewolfAgent(LitAgent):
                                 )
                             if not second_explode_interrupted_election:
                                 # 投票玩家排除候选
-                                voting_agents = [agent for agent in current_alive if agent.name not in alive_candidates]
+                                voting_agents = [agent for agent in current_alive if agent.name not in candidate_names]
 
                                 # 让所有玩家直接投票选举警长
                                 msgs_election_vote = await fanout_pipeline(
