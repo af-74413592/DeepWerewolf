@@ -242,7 +242,7 @@ class AgentRunner(ParallelWorkerBase):
                     #降低最大rollout
                     import random
                     new_result = []
-                    if len(result) > 10:
+                    while len(new_result) < 10:
                         #手动控制global token num 不超过1万
                         global_token_num = 0
                         while global_token_num > 10000:
