@@ -244,7 +244,7 @@ class AgentRunner(ParallelWorkerBase):
                     new_result = []
                     while len(new_result) < 10:
                         #手动控制global token num 不超过1万
-                        global_token_num = 0
+                        global_token_num = 10001
                         while global_token_num > 10000:
                             triplet = random.sample(result,1)
                             global_token_num = len(triplet.prompt.get("token_ids")) + len(triplet.response.get("token_ids"))
