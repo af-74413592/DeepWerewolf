@@ -17,8 +17,8 @@ python -m agentlightning.verl \
     data.val_files=${DATA_DIR}/test.parquet \
     actor_rollout_ref.rollout.tensor_model_parallel_size=$ROLLOUT_TP_SIZE \
     trainer.n_gpus_per_node=${N_GPUS} \
-    data.train_batch_size=2 \
-    actor_rollout_ref.rollout.n=2 \
+    data.train_batch_size=1 \
+    actor_rollout_ref.rollout.n=1 \
     actor_rollout_ref.actor.ppo_mini_batch_size=8 \
     actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1 \
     actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1 \
