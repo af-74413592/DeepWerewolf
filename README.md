@@ -10,13 +10,21 @@ if trace_spans:
         triplets = self.triplet_exporter.export(trace_spans)
 ```
 
-run_async函数加了重试，其中
+run_async函数加了3次重试，其中
 ```
-if len(result) > 80:
-        import random
-        result = random.sample(result,80)
+#降低最大rollout
+import random
+new_result = []
+while len(new_result) < 10:
+#手动控制global token num 不超过1万
+global_token_num = 10001
+while global_token_num > 10000:
+        triplet = random.sample(result,1)
+        global_token_num = len(triplet.prompt.get("token_ids")) + len(triplet.response.get("token_ids"))
+new_result.append(triplet)
+rollout_obj = self._to_rollout_object(new_result, task.rollout_id)
 ```
-是为了减少最大rollout以防止报错
+是为了减少最大rollout 和 global_token_num以防止报错
 
 agentlightning/verl/daemon.py 338行
 ```
