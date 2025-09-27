@@ -6806,7 +6806,7 @@ it will also automatically trace each rollout using AgentOps.</p>
 <a id="__codelineno-0-242" name="__codelineno-0-242"></a>                    <span class="c1">#降低最大rollout</span>
 <a id="__codelineno-0-243" name="__codelineno-0-243"></a>                    <span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
 <a id="__codelineno-0-244" name="__codelineno-0-244"></a>                    <span class="n">new_result</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-245" name="__codelineno-0-245"></a>                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
+<a id="__codelineno-0-245" name="__codelineno-0-245"></a>                    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_result</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
 <a id="__codelineno-0-246" name="__codelineno-0-246"></a>                        <span class="c1">#手动控制global token num 不超过1万</span>
 <a id="__codelineno-0-247" name="__codelineno-0-247"></a>                        <span class="n">global_token_num</span> <span class="o">=</span> <span class="mi">0</span>
 <a id="__codelineno-0-248" name="__codelineno-0-248"></a>                        <span class="k">while</span> <span class="n">global_token_num</span> <span class="o">&gt;</span> <span class="mi">10000</span><span class="p">:</span>
@@ -7218,7 +7218,7 @@ it will also automatically trace each rollout using AgentOps.</p>
 <a id="__codelineno-0-242" name="__codelineno-0-242"></a>                <span class="c1">#降低最大rollout</span>
 <a id="__codelineno-0-243" name="__codelineno-0-243"></a>                <span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
 <a id="__codelineno-0-244" name="__codelineno-0-244"></a>                <span class="n">new_result</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-245" name="__codelineno-0-245"></a>                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
+<a id="__codelineno-0-245" name="__codelineno-0-245"></a>                <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_result</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
 <a id="__codelineno-0-246" name="__codelineno-0-246"></a>                    <span class="c1">#手动控制global token num 不超过1万</span>
 <a id="__codelineno-0-247" name="__codelineno-0-247"></a>                    <span class="n">global_token_num</span> <span class="o">=</span> <span class="mi">0</span>
 <a id="__codelineno-0-248" name="__codelineno-0-248"></a>                    <span class="k">while</span> <span class="n">global_token_num</span> <span class="o">&gt;</span> <span class="mi">10000</span><span class="p">:</span>
