@@ -1,3 +1,4 @@
+#   中文狼人杀 Agentic-RL 训练案例配置指南
 ####################################################################
 ### 基于框架版本信息
 #### - agent-lightning:  commit: 5724f63cfc75bcc2f4fb56958ef384d307717c18 | date: Sep 13, 2025
@@ -111,7 +112,7 @@ if choice.message.content:
         )
 ```
 
-##### 其他改动（可选）压缩历史消息防止报错
+### 其他改动（可选）压缩历史消息防止报错
 #### 处理过长的prompt：src/agentscope/model/openai_model.py OpenAIChatModel 的__call_ 函数
 ```
 self.tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B")
