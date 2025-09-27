@@ -1,16 +1,68 @@
-#训练脚本：example/werewolf/train.sh
-#客户端: python werewolf_agent.py
+####################################################################
+# 中文狼人杀 Agent-RL 训练案例配置与源码修改说明 (8*H20)
+# 基于框架版本信息
+# - agent-lightning:  commit: 5724f63cfc75bcc2f4fb56958ef384d307717c18 | date: Sep 13, 2025
+# - AgentScope:        commit: 458e8eedc94bba89bc3e4c6756e35fb4defbc0ac | date: Sep 15, 2025
+# - VERL:              version: v0.5.0
+# 相关仓库链接
+# - agent-lightning 官方: https://github.com/microsoft/agent-lightning
+# - AgentScope 官方:     https://github.com/agentscope-ai/agentscope
+# - 中文狼人杀修改版:    https://github.com/af-74413592/agentscope
+####################################################################
+### 一、核心执行脚本
+1. **训练脚本路径**  
+   `example/werewolf/train.sh`
 
-基于agent-lightning（5724f63cfc75bcc2f4fb56958ef384d307717c18，Sep 13, 2025）
-https://github.com/microsoft/agent-lightning
-源码改动：
-注释掉agentlightning/runner.py 115行
+2. **客户端启动命令**  
+   `python werewolf_agent.py`
+
+### 二、agent-lightning 源码修改位置（核心改动）(可以直接git clone 本仓库)
+#### 2.0 添加examples/werewolf 实现
+#### 2.1 注释 Triplet 导出逻辑（防止覆盖）
+- 文件路径：`agentlightning/runner.py`  
+- 修改位置：第 115 行  
+- 原代码（注释掉）：
+  ```python
+  if trace_spans: 
+          triplets = self.triplet_exporter.export(trace_spans)
+        ```
+
+#### 2.2 修改 Trace 列表构造（agentlightning/verl/daemon.py 第 338 行）：
+
 ```
-if trace_spans: 
-        triplets = self.triplet_exporter.export(trace_spans)
+trace_list = [
+                {"prompt_ids": t.prompt.get("token_ids", []), "response_ids": t.response.get("token_ids", []), "reward": t.reward}
+                for t in rollout.triplets
+            ]
+```
+#### 2.3 修正 Reward 取值逻辑（第 418 行）：
+
+原代码（注释掉）：
+
+```
+reward_list.append(sample_info["reward"])
 ```
 
-run_async函数加了3次重试，其中
+新代码（替换为）：
+
+```
+reward_list.append(trace["reward"])
+```
+#### agentlightning/verl/trainer.py 298行 注释了第一次val函数
+```
+        # if self.val_reward_fn is not None and self.config.trainer.get("val_before_train", True):
+        #     val_metrics = self._validate()
+        #     assert val_metrics, f"{val_metrics=}"
+        #     pprint(f"Initial validation metrics: {val_metrics}")
+        #     logger.log(data=val_metrics, step=self.global_steps)
+        #     if self.config.trainer.get("val_only", False):
+        #         return
+```
+
+
+### 其他改动
+#### runner.py 加了重试逻辑和最大token限制
+
 ```
 #降低最大rollout
 import random
@@ -24,61 +76,46 @@ while global_token_num > 10000:
 new_result.append(triplet)
 rollout_obj = self._to_rollout_object(new_result, task.rollout_id)
 ```
-是为了减少最大rollout 和 global_token_num以防止报错
 
-agentlightning/verl/daemon.py 338行
+#### daemon.py
 ```
-trace_list = [
-                {"prompt_ids": t.prompt.get("token_ids", []), "response_ids": t.response.get("token_ids", []), "reward": t.reward}
-                for t in rollout.triplets
-            ]
+if n_transition == 0:
+        raise Exception("Empty transitions !!!!!!!")
 ```
-agentlightning/verl/daemon.py 418行
-注释掉
-```
-reward_list.append(sample_info["reward"])
-```
-改为
-```
-reward_list.append(trace["reward"])
-```
-添加examples/werewolf 实现
 
-和agentscope（458e8eedc94bba89bc3e4c6756e35fb4defbc0ac，Sep 15, 2025）实现的一个中文狼人杀agent-rl训练的案例
-https://github.com/agentscope-ai/agentscope
-中文狼人杀修改版链接
-https://github.com/af-74413592/agentscope
-
-需做如下改动：
-src/agentscope/model/_openai_model.py 371行
-改为
+### 二、安装agentscope框架 （需要手动修改）
+#### 核心修改 手动处理think消息（因为新版vllm不在支持--enable_thinging格式消息返回）
+#### src/agentscope/model/_openai_model.py 371行 改为
 ```
 if choice.message.content:
-try:
-        thinking_part = choice.message.content.split("<think>")[1].split("</think>")[0]  
-        content_part = choice.message.content.split("</think>")[1]  
-        content_blocks.append(
-        ThinkingBlock(
-                type="thinking",
-                thinking=thinking_part,
-        ),
-        )
-        content_blocks.append(
-        TextBlock(
-                type="text",
-                text=content_part,
-        ),
-        )
-except:
-        content_blocks.append(
-        TextBlock(
-                type="text",
-                text=response.choices[0].message.content,
-        ),
+        try:
+                thinking_part = choice.message.content.split("<think>")[1].split("</think>")[0]  
+                content_part = choice.message.content.split("</think>")[1]  
+                content_blocks.append(
+                ThinkingBlock(
+                        type="thinking",
+                        thinking=thinking_part,
+                ),
+                )
+                content_blocks.append(
+                TextBlock(
+                        type="text",
+                        text=content_part,
+                ),
+                )
+        except:
+                content_blocks.append(
+                TextBlock(
+                        type="text",
+                        text=response.choices[0].message.content,
+                ),
         )
 ```
-处理过长的prompt：src/agentscope/model/_openai_model.py OpenAIChatModel 的__call__ 函数
+
+##### 其他改动（可选）压缩历史消息防止报错
+#### 处理过长的prompt：src/agentscope/model/openai_model.py OpenAIChatModel 的__call_ 函数
 ```
+self.tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B")
 conversations = [{"role":msg["role"], "content":msg["content"][0]['text'] if type(msg["content"]) == list else msg["content"]} for msg in messages]
 input_ids = self.tokenizer.apply_chat_template(
         conversations,
@@ -95,9 +132,9 @@ while len(input_ids) > 10000: （比maxlen稍微小一点）
         tokenize=True,
         )
 ```
-verlv0.5.0 改动
 
-注释掉 verl trainer/ppo/ray_trainer.py 415-418行
+### 三、verlv0.5.0 改动 (需要手动修改)
+#### 注释掉 verl trainer/ppo/ray_trainer.py 415-418行 （因为不需要很大的train_batch_size）
 ```
 real_train_batch_size = config.data.train_batch_size * config.actor_rollout_ref.rollout.n
         assert real_train_batch_size % minimal_bsz == 0, (
@@ -105,13 +142,45 @@ real_train_batch_size = config.data.train_batch_size * config.actor_rollout_ref.
         f"({minimal_bsz})"
         )
 ```
-注释掉 verl trainer/ppo/ray_trainer.py 500 行 
+
+#### 注释掉 verl trainer/ppo/ray_trainer.py 500 行
 ```
 assert config.data.train_batch_size >= config.actor_rollout_ref.actor.ppo_mini_batch_size
 ```
-超长序列可以尝试开启 actor_rollout_ref.actor.ulysses_sequence_parallel_size=2 
-####################################################################
 
+### 四、train.sh 说明
+data.train_batch_size=2 \
+actor_rollout_ref.rollout.n=2 \
+
+这两条可以压小，不需要太多rollout，agentlightning会把轨迹切开重组成新的rollout list
+
+actor_rollout_ref.actor.ppo_mini_batch_size=8 \
+actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1 \
+actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1 \
+actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=1 \
+
+压小了batchsize
+
+data.max_prompt_length=12288 \
+data.max_response_length=1024 \
+
+过长训练会炸掉，过短推理上下文不够
+
+actor_rollout_ref.rollout.gpu_memory_utilization=0.4 \
+
+4:6 分配推理和训练显存
+
+trainer.save_freq=1 \
+
+稳定了可以加大保存频率
+
+trainer.test_freq=0 \ 
+
+没有实现val方法，统计reward移动至train
+
+超长序列可以尝试开启 actor_rollout_ref.actor.ulysses_sequence_parallel_size=2
+
+#################################################
 ![Agent-lightning-banner](docs/assets/readme-banner.png)
 
 # Agent Lightning⚡
