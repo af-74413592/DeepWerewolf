@@ -240,10 +240,16 @@ class AgentRunner(ParallelWorkerBase):
                     # Pass the task input, not the whole task object
                     result = await rollout_method(task.input, task.rollout_id, resources_update.resources)
                     #降低最大rollout
-                    if len(result) > 40:
-                        import random
-                        result = random.sample(result,40)
-                    rollout_obj = self._to_rollout_object(result, task.rollout_id)
+                    import random
+                    new_result = []
+                    if len(result) > 10:
+                        #手动控制global token num 不超过1万
+                        global_token_num = 0
+                        while global_token_num > 10000:
+                            triplet = random.sample(result,1)
+                            global_token_num = len(triplet.prompt.get("token_ids")) + len(triplet.response.get("token_ids"))
+                        new_result.append(triplet)
+                    rollout_obj = self._to_rollout_object(new_result, task.rollout_id)
                     end_time = time.time()
                     logger.info(
                         f"{self._log_prefix(rollout_id)} Completed in "
