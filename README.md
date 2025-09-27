@@ -101,7 +101,7 @@ real_train_batch_size = config.data.train_batch_size * config.actor_rollout_ref.
 ```
 assert config.data.train_batch_size >= config.actor_rollout_ref.actor.ppo_mini_batch_size
 ```
-
+超长序列可以尝试开启 actor_rollout_ref.actor.ulysses_sequence_parallel_size=2 
 ####################################################################
 
 ![Agent-lightning-banner](docs/assets/readme-banner.png)
