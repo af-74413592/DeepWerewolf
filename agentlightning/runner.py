@@ -240,9 +240,9 @@ class AgentRunner(ParallelWorkerBase):
                     # Pass the task input, not the whole task object
                     result = await rollout_method(task.input, task.rollout_id, resources_update.resources)
                     #降低最大rollout
-                    if len(result) > 40:
+                    if len(result) > 5:
                         import random
-                        result = random.sample(result,40)
+                        result = random.sample(result,5)
                     rollout_obj = self._to_rollout_object(result, task.rollout_id)
                     end_time = time.time()
                     logger.info(
@@ -254,14 +254,11 @@ class AgentRunner(ParallelWorkerBase):
                 logger.exception(f"{self._log_prefix(rollout_id)} Exception during rollout.")
                 MAX_TRY = MAX_TRY - 1
             finally:
-                if rollout_obj.triplets:
-                    try:
-                        self.agent.on_rollout_end(task, rollout_obj, self, self.tracer)
-                    except Exception:
-                        logger.exception(f"{self._log_prefix(rollout_id)} Exception during on_rollout_end hook.")
-                    await self.client.post_rollout_async(rollout_obj)
-                else:
-                    raise Exception("rollout_obj.triplets is EMPTY")
+                try:
+                    self.agent.on_rollout_end(task, rollout_obj, self, self.tracer)
+                except Exception:
+                    logger.exception(f"{self._log_prefix(rollout_id)} Exception during on_rollout_end hook.")
+                await self.client.post_rollout_async(rollout_obj)
         return True
 
     async def iter_async(self) -> int:
