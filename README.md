@@ -1,13 +1,12 @@
 ####################################################################
-# 中文狼人杀 Agent-RL 训练案例配置与源码修改说明 (8*H20)
-# 基于框架版本信息
-# - agent-lightning:  commit: 5724f63cfc75bcc2f4fb56958ef384d307717c18 | date: Sep 13, 2025
-# - AgentScope:        commit: 458e8eedc94bba89bc3e4c6756e35fb4defbc0ac | date: Sep 15, 2025
-# - VERL:              version: v0.5.0
-# 相关仓库链接
-# - agent-lightning 官方: https://github.com/microsoft/agent-lightning
-# - AgentScope 官方:     https://github.com/agentscope-ai/agentscope
-# - 中文狼人杀修改版:    https://github.com/af-74413592/agentscope
+### 基于框架版本信息
+#### - agent-lightning:  commit: 5724f63cfc75bcc2f4fb56958ef384d307717c18 | date: Sep 13, 2025
+#### - AgentScope:        commit: 458e8eedc94bba89bc3e4c6756e35fb4defbc0ac | date: Sep 15, 2025
+#### - VERL:              version: v0.5.0
+### 相关仓库链接
+#### - agent-lightning 官方: https://github.com/microsoft/agent-lightning
+#### - AgentScope 官方:     https://github.com/agentscope-ai/agentscope
+#### - 中文狼人杀修改版:    https://github.com/af-74413592/agentscope
 ####################################################################
 ### 一、核心执行脚本
 1. **训练脚本路径**  
