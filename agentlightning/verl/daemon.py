@@ -351,8 +351,8 @@ class AgentModeDaemon:
                 continue
             response_length_list = [len(triplet.response.get("token_ids", [])) for triplet in rollout.triplets]
 
-            final_reward = np.mean([t.reward for t in rollout.triplets])
-            # final_reward = self._fillna_reward(rollout)
+            #final_reward = np.mean([t.reward for t in rollout.triplets])
+            final_reward = self._fillna_reward(rollout)
             sample_stat_list.append(
                 {
                     "sum_response_length": np.sum(response_length_list),

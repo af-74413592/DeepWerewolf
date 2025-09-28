@@ -8,7 +8,8 @@ export DATA_DIR=/root/dataDisk/fake-data
 export ROLLOUT_TP_SIZE=1
 export EXPERIMENT_NAME=werewolf
 export PROJECT_NAME=AgentLightning
-
+export VLLM_ATTENTION_BACKEND=XFORMERS
+export VLLM_FLASH_ATTN_VERSION=2
 echo "Starting training script..."
 
 python -m agentlightning.verl \
@@ -16,6 +17,7 @@ python -m agentlightning.verl \
     data.train_files=${DATA_DIR}/train.parquet \
     data.val_files=${DATA_DIR}/test.parquet \
     actor_rollout_ref.rollout.tensor_model_parallel_size=$ROLLOUT_TP_SIZE \
+    actor_rollout_ref.actor.ulysses_sequence_parallel_size=2 \
     trainer.n_gpus_per_node=${N_GPUS} \
     data.train_batch_size=1 \
     actor_rollout_ref.rollout.n=1 \
@@ -29,19 +31,19 @@ python -m agentlightning.verl \
     data.truncation='error' \
     trainer.val_before_train=True \
     actor_rollout_ref.actor.optim.lr=1e-6 \
-    actor_rollout_ref.model.use_remove_padding=False \
+    actor_rollout_ref.model.use_remove_padding=True \
     actor_rollout_ref.actor.use_kl_loss=False \
     actor_rollout_ref.actor.kl_loss_coef=0.000 \
     actor_rollout_ref.actor.entropy_coeff=0 \
     actor_rollout_ref.actor.clip_ratio_low=0.2 \
     actor_rollout_ref.actor.clip_ratio_high=0.3 \
     actor_rollout_ref.model.enable_gradient_checkpointing=True \
-    actor_rollout_ref.actor.fsdp_config.param_offload=True \
-    actor_rollout_ref.actor.fsdp_config.optimizer_offload=True \
+    actor_rollout_ref.actor.fsdp_config.param_offload=False \
+    actor_rollout_ref.actor.fsdp_config.optimizer_offload=False \
     actor_rollout_ref.rollout.name=vllm \
     actor_rollout_ref.rollout.gpu_memory_utilization=0.4 \
     actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=1 \
-    actor_rollout_ref.ref.fsdp_config.param_offload=True \
+    actor_rollout_ref.ref.fsdp_config.param_offload=False \
     algorithm.use_kl_in_reward=False \
     trainer.default_local_dir='/root/dataDisk/checkpoints' \
     trainer.rollout_data_dir='/root/dataDisk/rollout' \
