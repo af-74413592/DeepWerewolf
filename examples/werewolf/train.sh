@@ -28,7 +28,7 @@ python -m agentlightning.verl \
     actor_rollout_ref.model.path=${BASE_MODEL} \
     data.max_prompt_length=12288 \
     data.max_response_length=1024 \
-    data.truncation='error' \
+    data.truncation='middle' \
     trainer.val_before_train=True \
     actor_rollout_ref.actor.optim.lr=1e-6 \
     actor_rollout_ref.model.use_remove_padding=True \
