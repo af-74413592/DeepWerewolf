@@ -65,7 +65,8 @@ reward_list.append(trace["reward"])
 
 
 ### 其他改动
-#### agentlightning/runner.py 241行加了重试逻辑和手动最大token限制，可以自行调整，或者注释掉直接传入result
+#### agentlightning/runner.py 加入了重试逻辑
+#### 手动rollout限制和最大token限制，可以自行放开这段代码
 
 ```
 result = await rollout_method(task.input, task.rollout_id, resources_update.resources)
