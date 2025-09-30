@@ -15,7 +15,7 @@
 ####################################################################
 ### 一、核心执行脚本
 1. **训练脚本路径**  
-   `example/werewolf/train.sh`
+   `example/werewolf/train.sh` 或者 train-fsdp2.sh 都是可以的
 
 2. **客户端启动命令**  
    `python werewolf_agent.py`
@@ -164,27 +164,6 @@ if choice.message.content:
         )
 ```
 
-### 其他改动（可选）压缩历史消息防止报错
-#### 处理过长的prompt：src/agentscope/model/openai_model.py OpenAIChatModel 的__call_ 函数
-```
-self.tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B")
-conversations = [{"role":msg["role"], "content":msg["content"][0]['text'] if type(msg["content"]) == list else msg["content"]} for msg in messages]
-input_ids = self.tokenizer.apply_chat_template(
-        conversations,
-        add_generation_prompt=True,
-        tokenize=True,
-)
-
-while len(input_ids) > 10000: （比maxlen稍微小一点）
-        messages[1]["content"][0]['text'] = messages[1]["content"][0]['text'][:150] + '\n...\n' + messages[1]["content"][0]['text'][200:]
-        conversations = [{"role":msg["role"], "content":msg["content"][0]['text'] if type(msg["content"]) == list else msg["content"]} for msg in messages]
-        input_ids = self.tokenizer.apply_chat_template(
-        conversations,
-        add_generation_prompt=True,
-        tokenize=True,
-        )
-```
-
 ### 三、verlv0.5.0 改动 (需要手动修改)
 #### 注释掉 verl trainer/ppo/ray_trainer.py 415-418行 （因为不需要很大的train_batch_size）
 ```
@@ -203,37 +182,35 @@ assert config.data.train_batch_size >= config.actor_rollout_ref.actor.ppo_mini_b
 
 
 ### 四、train.sh 说明
+```
 data.train_batch_size=1 \
 actor_rollout_ref.rollout.n=1 \
 
-这两条可以压小，不需要太多rollout，agentlightning会把轨迹切开重组成新的rollout list
+这两条可以压小，不需要太多rollout，agentlightning会把轨迹切开重组成新的rollout list, 开到2x2, 有的时候会rollout出来三四百条。
 
-actor_rollout_ref.actor.ppo_mini_batch_size=8 \
-actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1 \
-actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1 \
-actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=1 \
-
-压小了batchsize
-
-data.max_prompt_length=12288 \
+data.max_prompt_length=15360 \
 data.max_response_length=1024 \
 
-过长训练会炸掉，过短推理上下文不够
+显存不够可以改小一点max_prompt_length
+
+data.truncation='middle'
+
+中间自动截断过长history
 
 actor_rollout_ref.rollout.gpu_memory_utilization=0.4 \
 
 4:6 分配推理和训练显存
 
-trainer.save_freq=1 \
+trainer.save_freq=1 
 
 稳定了可以加大保存频率
 
-trainer.test_freq=0 \ 
+trainer.test_freq=0 
 
 没有实现val方法，统计reward移动至train
 
 超长序列可以尝试开启 actor_rollout_ref.actor.ulysses_sequence_parallel_size=2
-
+```
 #################################################
 ![Agent-lightning-banner](docs/assets/readme-banner.png)
 
