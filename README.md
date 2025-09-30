@@ -1,8 +1,8 @@
 #   中文狼人杀 Agentic-RL 训练案例配置指南
 ####################################################################
 ### 基于框架版本信息
-#### - agent-lightning:  commit: 5724f63cfc75bcc2f4fb56958ef384d307717c18 | date: Sep 13, 2025
-#### - AgentScope:        commit: 458e8eedc94bba89bc3e4c6756e35fb4defbc0ac | date: Sep 15, 2025
+#### - agent-lightning:  commit: 5724f63cfc75bcc2f4fb56958ef384d307717c18 | date: Sep 13, 2025 (或者直接pip install -e . 安装本仓库)
+#### - AgentScope:        commit: 458e8eedc94bba89bc3e4c6756e35fb4defbc0ac | date: Sep 15, 2025 （截至2025-9-30日的版本 v1.0.4 测试了都是没有api冲突的）
 #### - VERL:              version: v0.5.0
 #### - VLLM:              version: v0.10.2
 #### - flash-attn         version: v2.8.1
@@ -10,6 +10,8 @@
 #### - agent-lightning 官方: https://github.com/microsoft/agent-lightning
 #### - AgentScope 官方:     https://github.com/agentscope-ai/agentscope
 #### - 中文狼人杀修改版:    https://github.com/af-74413592/agentscope
+####################################################################
+### 数据集 用fake-data.py 生成或者直接下载gsm8k的train.parquert都可以，仅仅起到一个迭代器的作用
 ####################################################################
 ### 一、核心执行脚本
 1. **训练脚本路径**  
