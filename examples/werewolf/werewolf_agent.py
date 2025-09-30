@@ -312,17 +312,6 @@ async def create_player(role: str, NAME_TO_ROLE:  dict, ch_names: dict, moderato
         agent = ReActAgent(
             name=name,
             sys_prompt=Prompts.system_prompt,
-            # model=DashScopeChatModel(
-            #     model_name="qwen3-max-preview",
-            #     api_key=os.environ["DASHSCOPE_API_KEY"],
-            #     enable_thinking=True,
-            # ),
-            # model=OpenAIChatModel(
-            #     model_name="/root/dataDisk/Qwen3-8B",
-            #     client_args={"base_url": "http://127.0.0.1:8000/v1"},
-            #     api_key="xxx",
-            #     stream=False,
-            # ),
             model=OpenAIChatModel(
                 model_name=llm.model,
                 client_args={"base_url": llm.endpoint},
@@ -1740,4 +1729,5 @@ class WerewolfAgent(LitAgent):
 
 
 if __name__ == "__main__":
+
     Trainer(n_workers=16).fit(WerewolfAgent(), "http://localhost:9999/")
