@@ -65,32 +65,77 @@ reward_list.append(trace["reward"])
 
 
 ### 其他改动
-#### runner.py 加了重试逻辑和最大token限制
+#### agentlightning/runner.py 241行加了重试逻辑和手动最大token限制，可以自行调整，或者注释掉直接传入result
 
 ```
-#降低最大rollout
-import random
-new_result = []
-while len(new_result) < 10:
-        #手动控制global token num 不超过1万
-        global_token_num = 10001
-        while global_token_num > 10000:
-                triplet = random.choice(result)
-                global_token_num = len(triplet.prompt.get("token_ids")) + len(triplet.response.get("token_ids"))
-                result.remove(triplet)
-new_result.append(triplet)
+result = await rollout_method(task.input, task.rollout_id, resources_update.resources)
+if len(result) > 64:
+   #降低最大rollout
+   import random
+   new_result = []
+   valid_result = [t for t in result if len(t.prompt.get("token_ids")) + len(t.response.get("token_ids")) <= 10000]
+   new_result = random.sample(valid_result, 64)
+else:
+   new_result = [t for t in result if len(t.prompt.get("token_ids")) + len(t.response.get("token_ids")) <= 10000]
+
 rollout_obj = self._to_rollout_object(new_result, task.rollout_id)
 ```
 
-#### daemon.py
+#### agentlightning/daemon.py
 ```
 if n_transition == 0:
         raise Exception("Empty transitions !!!!!!!")
 ```
 
+#### examples/werewolf/werewolf_agent.py
+```
+import random
+    if random.random() < 0.8:
+        agent = ReActAgent(
+            name=name,
+            sys_prompt=Prompts.system_prompt,
+            # model=DashScopeChatModel(
+            #     model_name="qwen3-max-preview",
+            #     api_key=os.environ["DASHSCOPE_API_KEY"],
+            #     enable_thinking=True,
+            # ),
+            # model=OpenAIChatModel(
+            #     model_name="/root/dataDisk/Qwen3-8B",
+            #     client_args={"base_url": "http://127.0.0.1:8000/v1"},
+            #     api_key="xxx",
+            #     stream=False,
+            # ),
+            model=OpenAIChatModel(
+                model_name=llm.model,
+                client_args={"base_url": llm.endpoint},
+                api_key="xxx",
+                stream=False,
+            ),
+            # formatter=DashScopeMultiAgentFormatter(),
+            formatter=OpenAIMultiAgentFormatter(),
+        )
+    else:
+        agent = ReActAgent(
+            name=name,
+            sys_prompt=Prompts.system_prompt.format(
+                player_name=name,
+                guidance=getattr(Prompts, f"notes_{role}"),
+            ),
+            model=DashScopeChatModel(
+                model_name="qwen3-max-preview",
+                api_key=os.environ["DASHSCOPE_API_KEY"],
+                enable_thinking=True,
+            ),
+            formatter=DashScopeMultiAgentFormatter(),
+        )
+```
+这一段函数引入了外部模型api进行对抗训练。也可以注释掉全都使用vllm客户端
+
+注意如果更改训练模型，记得替换self.tokenizer
+
 ### 二、安装agentscope框架 （需要手动修改）
 #### 核心修改 手动处理think消息（因为新版vllm不在支持--enable_thinging格式消息返回）
-#### src/agentscope/model/_openai_model.py 371行 改为
+#### src/agentscope/model/_openai_model.py _parse_openai_completion_response函数开头 改为
 ```
 if choice.message.content:
         try:
