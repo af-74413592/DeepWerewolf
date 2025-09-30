@@ -199,8 +199,8 @@ assert config.data.train_batch_size >= config.actor_rollout_ref.actor.ppo_mini_b
 ```
 
 ### 四、train.sh 说明
-data.train_batch_size=2 \
-actor_rollout_ref.rollout.n=2 \
+data.train_batch_size=1 \
+actor_rollout_ref.rollout.n=1 \
 
 这两条可以压小，不需要太多rollout，agentlightning会把轨迹切开重组成新的rollout list
 
