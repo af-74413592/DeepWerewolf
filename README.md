@@ -196,7 +196,9 @@ real_train_batch_size = config.data.train_batch_size * config.actor_rollout_ref.
 ```
 assert config.data.train_batch_size >= config.actor_rollout_ref.actor.ppo_mini_batch_size
 ```
-#### tensordict包 base.py 13960行storage_cast = storage.to(device, non_blocking=True) 改为False 异步模式与fsdp有概率会炸。
+#### tensordict包 base.py 13960行storage_cast = storage.to(device, non_blocking=True) 改为False 或者 verl 422 行 改为self.batch = self.batch.to(device,non_block_pin=True) 二选其一。要么都同步，要么都异步。（坑中之坑，坑了n天）
+
+
 ### 四、train.sh 说明
 data.train_batch_size=1 \
 actor_rollout_ref.rollout.n=1 \
