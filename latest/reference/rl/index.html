@@ -3331,7 +3331,8 @@ the original interface for compatibility with the RayPPOTrainer.</p>
 <span class="normal"><a href="#__codelineno-0-526">526</a></span>
 <span class="normal"><a href="#__codelineno-0-527">527</a></span>
 <span class="normal"><a href="#__codelineno-0-528">528</a></span>
-<span class="normal"><a href="#__codelineno-0-529">529</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="k">class</span><span class="w"> </span><span class="nc">AgentModeDaemon</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-529">529</a></span>
+<span class="normal"><a href="#__codelineno-0-530">530</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="k">class</span><span class="w"> </span><span class="nc">AgentModeDaemon</span><span class="p">:</span>
 <a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">    AgentModeDaemon using the AgentLightningServer SDK.</span>
 <a id="__codelineno-0-90" name="__codelineno-0-90"></a>
@@ -3735,45 +3736,46 @@ the original interface for compatibility with the RayPPOTrainer.</p>
 <a id="__codelineno-0-488" name="__codelineno-0-488"></a>                <span class="s2">&quot;responses&quot;</span><span class="p">:</span> <span class="n">batch_response_ids</span><span class="p">,</span>
 <a id="__codelineno-0-489" name="__codelineno-0-489"></a>                <span class="s2">&quot;input_ids&quot;</span><span class="p">:</span> <span class="n">batch_seq</span><span class="p">,</span>  <span class="c1"># here input_ids become the whole sentences</span>
 <a id="__codelineno-0-490" name="__codelineno-0-490"></a>                <span class="s2">&quot;attention_mask&quot;</span><span class="p">:</span> <span class="n">attention_mask</span><span class="p">,</span>
-<a id="__codelineno-0-491" name="__codelineno-0-491"></a>                <span class="s2">&quot;position_ids&quot;</span><span class="p">:</span> <span class="n">position_ids</span><span class="p">,</span>
-<a id="__codelineno-0-492" name="__codelineno-0-492"></a>                <span class="s2">&quot;is_drop_mask&quot;</span><span class="p">:</span> <span class="n">is_drop_mask</span><span class="p">,</span>
-<a id="__codelineno-0-493" name="__codelineno-0-493"></a>                <span class="s2">&quot;token_level_scores&quot;</span><span class="p">:</span> <span class="n">token_level_scores</span><span class="o">.</span><span class="n">contiguous</span><span class="p">(),</span>
-<a id="__codelineno-0-494" name="__codelineno-0-494"></a>            <span class="p">},</span>
-<a id="__codelineno-0-495" name="__codelineno-0-495"></a>            <span class="n">batch_size</span><span class="o">=</span><span class="n">n_transition</span><span class="p">,</span>
-<a id="__codelineno-0-496" name="__codelineno-0-496"></a>        <span class="p">)</span>
-<a id="__codelineno-0-497" name="__codelineno-0-497"></a>        <span class="n">data_proto</span> <span class="o">=</span> <span class="n">DataProto</span><span class="p">(</span><span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">)</span>
-<a id="__codelineno-0-498" name="__codelineno-0-498"></a>
-<a id="__codelineno-0-499" name="__codelineno-0-499"></a>        <span class="n">data_metrics</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-500" name="__codelineno-0-500"></a>            <span class="s2">&quot;agent_mode/n_trunc_sample_because_of_response&quot;</span><span class="p">:</span> <span class="n">n_trunc_sample_because_of_response</span><span class="p">,</span>
-<a id="__codelineno-0-501" name="__codelineno-0-501"></a>            <span class="s2">&quot;agent_mode/n_sample_to_train&quot;</span><span class="p">:</span> <span class="n">n_transition</span><span class="p">,</span>
-<a id="__codelineno-0-502" name="__codelineno-0-502"></a>        <span class="p">}</span>
-<a id="__codelineno-0-503" name="__codelineno-0-503"></a>
-<a id="__codelineno-0-504" name="__codelineno-0-504"></a>        <span class="c1"># Add non-tensor data for advantage calculation and logging</span>
-<a id="__codelineno-0-505" name="__codelineno-0-505"></a>        <span class="n">data_proto</span><span class="o">.</span><span class="n">non_tensor_batch</span><span class="p">[</span><span class="s2">&quot;data_id_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data_id_list</span><span class="p">)</span>
-<a id="__codelineno-0-506" name="__codelineno-0-506"></a>        <span class="n">data_proto</span><span class="o">.</span><span class="n">non_tensor_batch</span><span class="p">[</span><span class="s2">&quot;rollout_id_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rollout_id_list</span><span class="p">)</span>
-<a id="__codelineno-0-507" name="__codelineno-0-507"></a>        <span class="n">data_proto</span><span class="o">.</span><span class="n">non_tensor_batch</span><span class="p">[</span><span class="s2">&quot;turn_index_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">turn_index_list</span><span class="p">)</span>
-<a id="__codelineno-0-508" name="__codelineno-0-508"></a>
-<a id="__codelineno-0-509" name="__codelineno-0-509"></a>        <span class="k">return</span> <span class="n">data_proto</span><span class="p">,</span> <span class="n">data_metrics</span>
-<a id="__codelineno-0-510" name="__codelineno-0-510"></a>
-<a id="__codelineno-0-511" name="__codelineno-0-511"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">clear_data_and_server</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<a id="__codelineno-0-512" name="__codelineno-0-512"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Resets the internal state of the daemon for the next run.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-513" name="__codelineno-0-513"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">backend_llm_server_addresses</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-514" name="__codelineno-0-514"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_completed_rollouts</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-<a id="__codelineno-0-515" name="__codelineno-0-515"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_task_id_to_original_sample</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-<a id="__codelineno-0-516" name="__codelineno-0-516"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_total_tasks_queued</span> <span class="o">=</span> <span class="mi">0</span>
-<a id="__codelineno-0-517" name="__codelineno-0-517"></a>        <span class="c1"># For a true reset, the server&#39;s internal queues would also need clearing.</span>
-<a id="__codelineno-0-518" name="__codelineno-0-518"></a>        <span class="c1"># This implementation assumes that `set_up_data_and_server` is called</span>
-<a id="__codelineno-0-519" name="__codelineno-0-519"></a>        <span class="c1"># for each new run, effectively starting a fresh batch.</span>
-<a id="__codelineno-0-520" name="__codelineno-0-520"></a>
-<a id="__codelineno-0-521" name="__codelineno-0-521"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_fillna_reward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rollout</span><span class="p">):</span>
-<a id="__codelineno-0-522" name="__codelineno-0-522"></a>        <span class="k">if</span> <span class="n">rollout</span><span class="o">.</span><span class="n">final_reward</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-523" name="__codelineno-0-523"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reward_fillna_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-524" name="__codelineno-0-524"></a>                <span class="n">final_reward</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reward_fillna_value</span>
-<a id="__codelineno-0-525" name="__codelineno-0-525"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-526" name="__codelineno-0-526"></a>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reward is None for rollout </span><span class="si">{</span><span class="n">rollout</span><span class="o">.</span><span class="n">rollout_id</span><span class="si">}</span><span class="s2">, please check the reward function.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-527" name="__codelineno-0-527"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-528" name="__codelineno-0-528"></a>            <span class="n">final_reward</span> <span class="o">=</span> <span class="n">rollout</span><span class="o">.</span><span class="n">final_reward</span>
-<a id="__codelineno-0-529" name="__codelineno-0-529"></a>        <span class="k">return</span> <span class="n">final_reward</span>
+<a id="__codelineno-0-491" name="__codelineno-0-491"></a>                <span class="s2">&quot;response_mask&quot;</span><span class="p">:</span><span class="n">response_attention_mask</span><span class="p">,</span>
+<a id="__codelineno-0-492" name="__codelineno-0-492"></a>                <span class="s2">&quot;position_ids&quot;</span><span class="p">:</span> <span class="n">position_ids</span><span class="p">,</span>
+<a id="__codelineno-0-493" name="__codelineno-0-493"></a>                <span class="s2">&quot;is_drop_mask&quot;</span><span class="p">:</span> <span class="n">is_drop_mask</span><span class="p">,</span>
+<a id="__codelineno-0-494" name="__codelineno-0-494"></a>                <span class="s2">&quot;token_level_scores&quot;</span><span class="p">:</span> <span class="n">token_level_scores</span><span class="o">.</span><span class="n">contiguous</span><span class="p">(),</span>
+<a id="__codelineno-0-495" name="__codelineno-0-495"></a>            <span class="p">},</span>
+<a id="__codelineno-0-496" name="__codelineno-0-496"></a>            <span class="n">batch_size</span><span class="o">=</span><span class="n">n_transition</span><span class="p">,</span>
+<a id="__codelineno-0-497" name="__codelineno-0-497"></a>        <span class="p">)</span>
+<a id="__codelineno-0-498" name="__codelineno-0-498"></a>        <span class="n">data_proto</span> <span class="o">=</span> <span class="n">DataProto</span><span class="p">(</span><span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">)</span>
+<a id="__codelineno-0-499" name="__codelineno-0-499"></a>
+<a id="__codelineno-0-500" name="__codelineno-0-500"></a>        <span class="n">data_metrics</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-0-501" name="__codelineno-0-501"></a>            <span class="s2">&quot;agent_mode/n_trunc_sample_because_of_response&quot;</span><span class="p">:</span> <span class="n">n_trunc_sample_because_of_response</span><span class="p">,</span>
+<a id="__codelineno-0-502" name="__codelineno-0-502"></a>            <span class="s2">&quot;agent_mode/n_sample_to_train&quot;</span><span class="p">:</span> <span class="n">n_transition</span><span class="p">,</span>
+<a id="__codelineno-0-503" name="__codelineno-0-503"></a>        <span class="p">}</span>
+<a id="__codelineno-0-504" name="__codelineno-0-504"></a>
+<a id="__codelineno-0-505" name="__codelineno-0-505"></a>        <span class="c1"># Add non-tensor data for advantage calculation and logging</span>
+<a id="__codelineno-0-506" name="__codelineno-0-506"></a>        <span class="n">data_proto</span><span class="o">.</span><span class="n">non_tensor_batch</span><span class="p">[</span><span class="s2">&quot;data_id_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data_id_list</span><span class="p">)</span>
+<a id="__codelineno-0-507" name="__codelineno-0-507"></a>        <span class="n">data_proto</span><span class="o">.</span><span class="n">non_tensor_batch</span><span class="p">[</span><span class="s2">&quot;rollout_id_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rollout_id_list</span><span class="p">)</span>
+<a id="__codelineno-0-508" name="__codelineno-0-508"></a>        <span class="n">data_proto</span><span class="o">.</span><span class="n">non_tensor_batch</span><span class="p">[</span><span class="s2">&quot;turn_index_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">turn_index_list</span><span class="p">)</span>
+<a id="__codelineno-0-509" name="__codelineno-0-509"></a>
+<a id="__codelineno-0-510" name="__codelineno-0-510"></a>        <span class="k">return</span> <span class="n">data_proto</span><span class="p">,</span> <span class="n">data_metrics</span>
+<a id="__codelineno-0-511" name="__codelineno-0-511"></a>
+<a id="__codelineno-0-512" name="__codelineno-0-512"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">clear_data_and_server</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-0-513" name="__codelineno-0-513"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Resets the internal state of the daemon for the next run.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-514" name="__codelineno-0-514"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">backend_llm_server_addresses</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-515" name="__codelineno-0-515"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_completed_rollouts</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<a id="__codelineno-0-516" name="__codelineno-0-516"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_task_id_to_original_sample</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<a id="__codelineno-0-517" name="__codelineno-0-517"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_total_tasks_queued</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-0-518" name="__codelineno-0-518"></a>        <span class="c1"># For a true reset, the server&#39;s internal queues would also need clearing.</span>
+<a id="__codelineno-0-519" name="__codelineno-0-519"></a>        <span class="c1"># This implementation assumes that `set_up_data_and_server` is called</span>
+<a id="__codelineno-0-520" name="__codelineno-0-520"></a>        <span class="c1"># for each new run, effectively starting a fresh batch.</span>
+<a id="__codelineno-0-521" name="__codelineno-0-521"></a>
+<a id="__codelineno-0-522" name="__codelineno-0-522"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_fillna_reward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rollout</span><span class="p">):</span>
+<a id="__codelineno-0-523" name="__codelineno-0-523"></a>        <span class="k">if</span> <span class="n">rollout</span><span class="o">.</span><span class="n">final_reward</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-524" name="__codelineno-0-524"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reward_fillna_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-525" name="__codelineno-0-525"></a>                <span class="n">final_reward</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reward_fillna_value</span>
+<a id="__codelineno-0-526" name="__codelineno-0-526"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-527" name="__codelineno-0-527"></a>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reward is None for rollout </span><span class="si">{</span><span class="n">rollout</span><span class="o">.</span><span class="n">rollout_id</span><span class="si">}</span><span class="s2">, please check the reward function.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-528" name="__codelineno-0-528"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-529" name="__codelineno-0-529"></a>            <span class="n">final_reward</span> <span class="o">=</span> <span class="n">rollout</span><span class="o">.</span><span class="n">final_reward</span>
+<a id="__codelineno-0-530" name="__codelineno-0-530"></a>        <span class="k">return</span> <span class="n">final_reward</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3806,17 +3808,17 @@ the original interface for compatibility with the RayPPOTrainer.</p>
 
             <details class="quote">
               <summary>Source code in <code>agentlightning/verl/daemon.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-511">511</a></span>
-<span class="normal"><a href="#__codelineno-0-512">512</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-512">512</a></span>
 <span class="normal"><a href="#__codelineno-0-513">513</a></span>
 <span class="normal"><a href="#__codelineno-0-514">514</a></span>
 <span class="normal"><a href="#__codelineno-0-515">515</a></span>
-<span class="normal"><a href="#__codelineno-0-516">516</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-511" name="__codelineno-0-511"></a><span class="k">def</span><span class="w"> </span><span class="nf">clear_data_and_server</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<a id="__codelineno-0-512" name="__codelineno-0-512"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Resets the internal state of the daemon for the next run.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-513" name="__codelineno-0-513"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">backend_llm_server_addresses</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-514" name="__codelineno-0-514"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_completed_rollouts</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-<a id="__codelineno-0-515" name="__codelineno-0-515"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_task_id_to_original_sample</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-<a id="__codelineno-0-516" name="__codelineno-0-516"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_total_tasks_queued</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="normal"><a href="#__codelineno-0-516">516</a></span>
+<span class="normal"><a href="#__codelineno-0-517">517</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-512" name="__codelineno-0-512"></a><span class="k">def</span><span class="w"> </span><span class="nf">clear_data_and_server</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-0-513" name="__codelineno-0-513"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Resets the internal state of the daemon for the next run.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-514" name="__codelineno-0-514"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">backend_llm_server_addresses</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-515" name="__codelineno-0-515"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_completed_rollouts</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<a id="__codelineno-0-516" name="__codelineno-0-516"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_task_id_to_original_sample</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<a id="__codelineno-0-517" name="__codelineno-0-517"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_total_tasks_queued</span> <span class="o">=</span> <span class="mi">0</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4056,7 +4058,8 @@ truncation, and tensor creation for the PPO training loop.</p>
 <span class="normal"><a href="#__codelineno-0-506">506</a></span>
 <span class="normal"><a href="#__codelineno-0-507">507</a></span>
 <span class="normal"><a href="#__codelineno-0-508">508</a></span>
-<span class="normal"><a href="#__codelineno-0-509">509</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-372" name="__codelineno-0-372"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_train_data_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_prompt_length</span><span class="p">,</span> <span class="n">max_response_length</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-509">509</a></span>
+<span class="normal"><a href="#__codelineno-0-510">510</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-372" name="__codelineno-0-372"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_train_data_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_prompt_length</span><span class="p">,</span> <span class="n">max_response_length</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
 <a id="__codelineno-0-373" name="__codelineno-0-373"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-0-374" name="__codelineno-0-374"></a><span class="sd">    Processes completed rollouts to generate a training data batch.</span>
 <a id="__codelineno-0-375" name="__codelineno-0-375"></a>
@@ -4175,25 +4178,26 @@ truncation, and tensor creation for the PPO training loop.</p>
 <a id="__codelineno-0-488" name="__codelineno-0-488"></a>            <span class="s2">&quot;responses&quot;</span><span class="p">:</span> <span class="n">batch_response_ids</span><span class="p">,</span>
 <a id="__codelineno-0-489" name="__codelineno-0-489"></a>            <span class="s2">&quot;input_ids&quot;</span><span class="p">:</span> <span class="n">batch_seq</span><span class="p">,</span>  <span class="c1"># here input_ids become the whole sentences</span>
 <a id="__codelineno-0-490" name="__codelineno-0-490"></a>            <span class="s2">&quot;attention_mask&quot;</span><span class="p">:</span> <span class="n">attention_mask</span><span class="p">,</span>
-<a id="__codelineno-0-491" name="__codelineno-0-491"></a>            <span class="s2">&quot;position_ids&quot;</span><span class="p">:</span> <span class="n">position_ids</span><span class="p">,</span>
-<a id="__codelineno-0-492" name="__codelineno-0-492"></a>            <span class="s2">&quot;is_drop_mask&quot;</span><span class="p">:</span> <span class="n">is_drop_mask</span><span class="p">,</span>
-<a id="__codelineno-0-493" name="__codelineno-0-493"></a>            <span class="s2">&quot;token_level_scores&quot;</span><span class="p">:</span> <span class="n">token_level_scores</span><span class="o">.</span><span class="n">contiguous</span><span class="p">(),</span>
-<a id="__codelineno-0-494" name="__codelineno-0-494"></a>        <span class="p">},</span>
-<a id="__codelineno-0-495" name="__codelineno-0-495"></a>        <span class="n">batch_size</span><span class="o">=</span><span class="n">n_transition</span><span class="p">,</span>
-<a id="__codelineno-0-496" name="__codelineno-0-496"></a>    <span class="p">)</span>
-<a id="__codelineno-0-497" name="__codelineno-0-497"></a>    <span class="n">data_proto</span> <span class="o">=</span> <span class="n">DataProto</span><span class="p">(</span><span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">)</span>
-<a id="__codelineno-0-498" name="__codelineno-0-498"></a>
-<a id="__codelineno-0-499" name="__codelineno-0-499"></a>    <span class="n">data_metrics</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-500" name="__codelineno-0-500"></a>        <span class="s2">&quot;agent_mode/n_trunc_sample_because_of_response&quot;</span><span class="p">:</span> <span class="n">n_trunc_sample_because_of_response</span><span class="p">,</span>
-<a id="__codelineno-0-501" name="__codelineno-0-501"></a>        <span class="s2">&quot;agent_mode/n_sample_to_train&quot;</span><span class="p">:</span> <span class="n">n_transition</span><span class="p">,</span>
-<a id="__codelineno-0-502" name="__codelineno-0-502"></a>    <span class="p">}</span>
-<a id="__codelineno-0-503" name="__codelineno-0-503"></a>
-<a id="__codelineno-0-504" name="__codelineno-0-504"></a>    <span class="c1"># Add non-tensor data for advantage calculation and logging</span>
-<a id="__codelineno-0-505" name="__codelineno-0-505"></a>    <span class="n">data_proto</span><span class="o">.</span><span class="n">non_tensor_batch</span><span class="p">[</span><span class="s2">&quot;data_id_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data_id_list</span><span class="p">)</span>
-<a id="__codelineno-0-506" name="__codelineno-0-506"></a>    <span class="n">data_proto</span><span class="o">.</span><span class="n">non_tensor_batch</span><span class="p">[</span><span class="s2">&quot;rollout_id_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rollout_id_list</span><span class="p">)</span>
-<a id="__codelineno-0-507" name="__codelineno-0-507"></a>    <span class="n">data_proto</span><span class="o">.</span><span class="n">non_tensor_batch</span><span class="p">[</span><span class="s2">&quot;turn_index_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">turn_index_list</span><span class="p">)</span>
-<a id="__codelineno-0-508" name="__codelineno-0-508"></a>
-<a id="__codelineno-0-509" name="__codelineno-0-509"></a>    <span class="k">return</span> <span class="n">data_proto</span><span class="p">,</span> <span class="n">data_metrics</span>
+<a id="__codelineno-0-491" name="__codelineno-0-491"></a>            <span class="s2">&quot;response_mask&quot;</span><span class="p">:</span><span class="n">response_attention_mask</span><span class="p">,</span>
+<a id="__codelineno-0-492" name="__codelineno-0-492"></a>            <span class="s2">&quot;position_ids&quot;</span><span class="p">:</span> <span class="n">position_ids</span><span class="p">,</span>
+<a id="__codelineno-0-493" name="__codelineno-0-493"></a>            <span class="s2">&quot;is_drop_mask&quot;</span><span class="p">:</span> <span class="n">is_drop_mask</span><span class="p">,</span>
+<a id="__codelineno-0-494" name="__codelineno-0-494"></a>            <span class="s2">&quot;token_level_scores&quot;</span><span class="p">:</span> <span class="n">token_level_scores</span><span class="o">.</span><span class="n">contiguous</span><span class="p">(),</span>
+<a id="__codelineno-0-495" name="__codelineno-0-495"></a>        <span class="p">},</span>
+<a id="__codelineno-0-496" name="__codelineno-0-496"></a>        <span class="n">batch_size</span><span class="o">=</span><span class="n">n_transition</span><span class="p">,</span>
+<a id="__codelineno-0-497" name="__codelineno-0-497"></a>    <span class="p">)</span>
+<a id="__codelineno-0-498" name="__codelineno-0-498"></a>    <span class="n">data_proto</span> <span class="o">=</span> <span class="n">DataProto</span><span class="p">(</span><span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">)</span>
+<a id="__codelineno-0-499" name="__codelineno-0-499"></a>
+<a id="__codelineno-0-500" name="__codelineno-0-500"></a>    <span class="n">data_metrics</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-0-501" name="__codelineno-0-501"></a>        <span class="s2">&quot;agent_mode/n_trunc_sample_because_of_response&quot;</span><span class="p">:</span> <span class="n">n_trunc_sample_because_of_response</span><span class="p">,</span>
+<a id="__codelineno-0-502" name="__codelineno-0-502"></a>        <span class="s2">&quot;agent_mode/n_sample_to_train&quot;</span><span class="p">:</span> <span class="n">n_transition</span><span class="p">,</span>
+<a id="__codelineno-0-503" name="__codelineno-0-503"></a>    <span class="p">}</span>
+<a id="__codelineno-0-504" name="__codelineno-0-504"></a>
+<a id="__codelineno-0-505" name="__codelineno-0-505"></a>    <span class="c1"># Add non-tensor data for advantage calculation and logging</span>
+<a id="__codelineno-0-506" name="__codelineno-0-506"></a>    <span class="n">data_proto</span><span class="o">.</span><span class="n">non_tensor_batch</span><span class="p">[</span><span class="s2">&quot;data_id_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data_id_list</span><span class="p">)</span>
+<a id="__codelineno-0-507" name="__codelineno-0-507"></a>    <span class="n">data_proto</span><span class="o">.</span><span class="n">non_tensor_batch</span><span class="p">[</span><span class="s2">&quot;rollout_id_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rollout_id_list</span><span class="p">)</span>
+<a id="__codelineno-0-508" name="__codelineno-0-508"></a>    <span class="n">data_proto</span><span class="o">.</span><span class="n">non_tensor_batch</span><span class="p">[</span><span class="s2">&quot;turn_index_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">turn_index_list</span><span class="p">)</span>
+<a id="__codelineno-0-509" name="__codelineno-0-509"></a>
+<a id="__codelineno-0-510" name="__codelineno-0-510"></a>    <span class="k">return</span> <span class="n">data_proto</span><span class="p">,</span> <span class="n">data_metrics</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
