@@ -5,7 +5,7 @@
 #### - AgentScope:        commit: 458e8eedc94bba89bc3e4c6756e35fb4defbc0ac | date: Sep 15, 2025 （截至2025-9-30日的版本 v1.0.4 测试了都是没有api冲突的）
 #### - VERL:              version: v0.5.0
 #### - VLLM:              version: v0.10.2
-#### - flash-attn         version: v2.8.1
+#### - flash-attn         version: v2.8.3
 ### 相关仓库链接
 #### - agent-lightning 官方: https://github.com/microsoft/agent-lightning
 #### - AgentScope 官方:     https://github.com/agentscope-ai/agentscope
