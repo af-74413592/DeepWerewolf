@@ -488,6 +488,7 @@ class AgentModeDaemon:
                 "responses": batch_response_ids,
                 "input_ids": batch_seq,  # here input_ids become the whole sentences
                 "attention_mask": attention_mask,
+                "response_mask":response_attention_mask,
                 "position_ids": position_ids,
                 "is_drop_mask": is_drop_mask,
                 "token_level_scores": token_level_scores.contiguous(),
