@@ -163,6 +163,27 @@ if choice.message.content:
                 ),
         )
 ```
+### 其他改动（可选）压缩历史消息防止报错
+
+#### 处理过长的prompt：src/agentscope/model/openai_model.py OpenAIChatModel 的__call_ 函数
+```
+self.tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B")
+conversations = [{"role":msg["role"], "content":msg["content"][0]['text'] if type(msg["content"]) == list else msg["content"]} for msg in messages]
+input_ids = self.tokenizer.apply_chat_template(
+        conversations,
+        add_generation_prompt=True,
+        tokenize=True,
+)
+
+while len(input_ids) > 10000: （比maxlen稍微小一点）
+        messages[1]["content"][0]['text'] = messages[1]["content"][0]['text'][:150] + '\n...\n' + messages[1]["content"][0]['text'][200:]
+        conversations = [{"role":msg["role"], "content":msg["content"][0]['text'] if type(msg["content"]) == list else msg["content"]} for msg in messages]
+        input_ids = self.tokenizer.apply_chat_template(
+        conversations,
+        add_generation_prompt=True,
+        tokenize=True,
+        )
+```
 
 ### 三、verlv0.5.0 改动 (需要手动修改)
 #### 注释掉 verl trainer/ppo/ray_trainer.py 415-418行 （因为不需要很大的train_batch_size）
