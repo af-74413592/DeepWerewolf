@@ -244,6 +244,8 @@ class AgentRunner(ParallelWorkerBase):
                         #降低最大rollout
                         import random
                         new_result = random.sample(valid_result, 64)
+                    else:
+                        new_result = valid_result
                     # rollout_obj = self._to_rollout_object(result, task.rollout_id)
                     rollout_obj = self._to_rollout_object(new_result, task.rollout_id)
 
