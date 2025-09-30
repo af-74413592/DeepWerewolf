@@ -94,17 +94,6 @@ import random
         agent = ReActAgent(
             name=name,
             sys_prompt=Prompts.system_prompt,
-            # model=DashScopeChatModel(
-            #     model_name="qwen3-max-preview",
-            #     api_key=os.environ["DASHSCOPE_API_KEY"],
-            #     enable_thinking=True,
-            # ),
-            # model=OpenAIChatModel(
-            #     model_name="/root/dataDisk/Qwen3-8B",
-            #     client_args={"base_url": "http://127.0.0.1:8000/v1"},
-            #     api_key="xxx",
-            #     stream=False,
-            # ),
             model=OpenAIChatModel(
                 model_name=llm.model,
                 client_args={"base_url": llm.endpoint},
@@ -129,9 +118,22 @@ import random
             formatter=DashScopeMultiAgentFormatter(),
         )
 ```
-这一段函数引入了外部模型api进行对抗训练。也可以注释掉全都使用vllm客户端
-
-注意如果更改训练模型，记得替换self.tokenizer
+这一段函数引入了外部模型api进行对抗训练。也可以注释掉全都使用vllm客户端 如下
+```
+agent = ReActAgent(
+   name=name,
+   sys_prompt=Prompts.system_prompt,
+   model=OpenAIChatModel(
+       model_name=llm.model,
+       client_args={"base_url": llm.endpoint},
+       api_key="xxx",
+       stream=False,
+   ),
+   # formatter=DashScopeMultiAgentFormatter(),
+   formatter=OpenAIMultiAgentFormatter(),
+)
+```
+#### 注意如果更改训练模型，记得替换self.tokenizer
 
 ### 二、安装agentscope框架 （需要手动修改）
 #### 核心修改 手动处理think消息（因为新版vllm不在支持--enable_thinging格式消息返回）
