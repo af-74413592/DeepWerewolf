@@ -199,7 +199,7 @@ real_train_batch_size = config.data.train_batch_size * config.actor_rollout_ref.
 ```
 assert config.data.train_batch_size >= config.actor_rollout_ref.actor.ppo_mini_batch_size
 ```
-#### tensordict包 base.py 13960行storage_cast = storage.to(device, non_blocking=True) 改为False （坑中之坑，坑了n天）
+#### 由于可能是verl/vllm作为后端训练或者是其他什么原因，训练不是很稳定，可以开启monitor_train.sh脚本自动重启训练
 
 
 ### 四、train.sh 说明
