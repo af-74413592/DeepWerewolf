@@ -231,6 +231,11 @@ trainer.test_freq=0
 没有实现val方法，统计reward移动至train
 
 超长序列可以尝试开启 actor_rollout_ref.actor.ulysses_sequence_parallel_size=2
+
+trainer.default_local_dir='/root/dataDisk/checkpoints' \ 权重保存位置
+
+trainer.remove_previous_ckpt_in_save=True \ 打开自动删除历史权重
+
 ```
 #################################################
 ![Agent-lightning-banner](docs/assets/readme-banner.png)
