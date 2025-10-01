@@ -268,7 +268,7 @@ class AgentRunner(ParallelWorkerBase):
                 else:
                     print("Warning: error occured ,empty triplets")
                     if MAX_TRY == 0:
-                        raise Exception("rollout_obj.triplets is EMPTY")
+                        raise Exception(f"rollout_obj.triplets is EMPTY, {task.rollout_id} failed")
         return True
 
     async def iter_async(self) -> int:
