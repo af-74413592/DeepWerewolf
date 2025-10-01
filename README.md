@@ -234,7 +234,7 @@ trainer.test_freq=0
 
 trainer.default_local_dir='/root/dataDisk/checkpoints' \ 权重保存位置
 
-trainer.remove_previous_ckpt_in_save=True \ 打开自动删除历史权重
+trainer.max_actor_ckpt_to_keep=3 \ 打开自动删除历史权重
 
 ```
 #################################################
