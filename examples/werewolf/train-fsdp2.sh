@@ -48,7 +48,7 @@ python -m agentlightning.verl \
     actor_rollout_ref.actor.fsdp_config.offload_policy=True \
     algorithm.use_kl_in_reward=False \
     trainer.default_local_dir='/root/dataDisk/checkpoints' \
-    trainer.remove_previous_ckpt_in_save=True \
+    trainer.max_actor_ckpt_to_keep=3 \
     trainer.rollout_data_dir='/root/dataDisk/rollout' \
     trainer.resume_mode=auto \
     trainer.critic_warmup=0 \
