@@ -4,7 +4,14 @@
 #### - agent-lightning:  commit: 5724f63cfc75bcc2f4fb56958ef384d307717c18 | date: Sep 13, 2025 (或者直接pip install -e . 安装本仓库)
 #### - AgentScope:        commit: 458e8eedc94bba89bc3e4c6756e35fb4defbc0ac | date: Sep 15, 2025 （截至2025-9-30日的版本 v1.0.4 测试了都是没有api冲突的）
 #### - VERL:              version: v0.5.0
-#### - VLLM:              version: v0.10.2
+#### - sglang:              version: v0.5.3rc0
+#####################################################################
+sglang相关改动：
+将本仓库下sglang_rollout.py  替换 verl包下 verl/workers/rollout/sglang_rollout/sglang_rollout.py
+将本仓库下schemas.py  替换 verl包下 verl/workers/rollout/schemas.py
+将本仓库下serving_chat.py  替换 sglang包下 srt/entrypoints/openai/serving_chat.py
+将srt/server_args.py 231行改为 reasoning_parser: Optional[str] = "qwen3" 232行改为 tool_call_parser: Optional[str] = "qwen25"
+#####################################################################
 #### - flash-attn         version: v2.8.3
 ### 相关仓库链接
 #### - agent-lightning 官方: https://github.com/microsoft/agent-lightning

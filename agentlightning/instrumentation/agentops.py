@@ -32,7 +32,7 @@ def _patch_new_agentops():
         if hasattr(return_value, "prompt_token_ids"):
             attributes["prompt_token_ids"] = list(return_value.prompt_token_ids)
         if hasattr(return_value, "response_token_ids"):
-            attributes["response_token_ids"] = list(return_value.response_token_ids[0])
+            attributes["response_token_ids"] = list(return_value.response_token_ids)
 
         # For LiteLLM, response is a openai._legacy_response.LegacyAPIResponse
         if hasattr(return_value, "http_response") and hasattr(return_value.http_response, "json"):
@@ -41,7 +41,7 @@ def _patch_new_agentops():
                 if "prompt_token_ids" in json_data:
                     attributes["prompt_token_ids"] = list(json_data["prompt_token_ids"])
                 if "response_token_ids" in json_data:
-                    attributes["response_token_ids"] = list(json_data["response_token_ids"][0])
+                    attributes["response_token_ids"] = list(json_data["response_token_ids"])
 
         return attributes
 

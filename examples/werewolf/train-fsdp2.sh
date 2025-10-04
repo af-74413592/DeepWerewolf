@@ -23,10 +23,9 @@ python -m agentlightning.verl \
     actor_rollout_ref.actor.ppo_mini_batch_size=32 \
     actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=4 \
     actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=4 \
-    actor_rollout_ref.rollout.multi_turn.format=hermes \
     actor_rollout_ref.model.path=${BASE_MODEL} \
-    data.max_prompt_length=15360 \
-    data.max_response_length=1024 \
+    data.max_prompt_length=14336 \
+    data.max_response_length=2048 \
     data.truncation='middle' \
     trainer.val_before_train=True \
     actor_rollout_ref.actor.optim.lr=1e-6 \
@@ -41,7 +40,7 @@ python -m agentlightning.verl \
     actor_rollout_ref.model.enable_gradient_checkpointing=True \
     actor_rollout_ref.actor.fsdp_config.param_offload=True \
     actor_rollout_ref.actor.fsdp_config.optimizer_offload=True \
-    actor_rollout_ref.rollout.name=vllm \
+    actor_rollout_ref.rollout.name=sglang \
     actor_rollout_ref.rollout.gpu_memory_utilization=0.4 \
     actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=8 \
     actor_rollout_ref.ref.fsdp_config.param_offload=True \
