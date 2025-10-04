@@ -2,30 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://microsoft.github.io/agent-lightning/latest/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-04</lastmod>
     </url>
     <url>
          <loc>https://microsoft.github.io/agent-lightning/latest/deep-dive/server-client-architecture/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-04</lastmod>
     </url>
     <url>
          <loc>https://microsoft.github.io/agent-lightning/latest/how-to/train-sql-agent/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-04</lastmod>
     </url>
     <url>
          <loc>https://microsoft.github.io/agent-lightning/latest/quickstart/getting-started/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-04</lastmod>
     </url>
     <url>
          <loc>https://microsoft.github.io/agent-lightning/latest/quickstart/installation/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-04</lastmod>
     </url>
     <url>
          <loc>https://microsoft.github.io/agent-lightning/latest/reference/core/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-04</lastmod>
     </url>
     <url>
          <loc>https://microsoft.github.io/agent-lightning/latest/reference/rl/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-04</lastmod>
     </url>
 </urlset>
