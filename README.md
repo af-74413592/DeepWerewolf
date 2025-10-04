@@ -6,11 +6,11 @@
 #### - VERL:              version: v0.5.0
 #### - sglang:              version: v0.5.3rc0
 #####################################################################
-sglang相关改动：
-将本仓库下sglang_rollout.py  替换 verl包下 verl/workers/rollout/sglang_rollout/sglang_rollout.py
-将本仓库下schemas.py  替换 verl包下 verl/workers/rollout/schemas.py
-将本仓库下serving_chat.py  替换 sglang包下 srt/entrypoints/openai/serving_chat.py
-将srt/server_args.py 231行改为 reasoning_parser: Optional[str] = "qwen3" 232行改为 tool_call_parser: Optional[str] = "qwen25"
+#### sglang相关改动：
+#### 将本仓库下sglang_rollout.py  替换 verl包下 verl/workers/rollout/sglang_rollout/sglang_rollout.py
+#### 将本仓库下schemas.py  替换 verl包下 verl/workers/rollout/schemas.py
+#### 将本仓库下serving_chat.py  替换 sglang包下 srt/entrypoints/openai/serving_chat.py
+#### 将srt/server_args.py 231行改为 reasoning_parser: Optional[str] = "qwen3" 232行改为 tool_call_parser: Optional[str] = "qwen25"
 #####################################################################
 #### - flash-attn         version: v2.8.3
 ### 相关仓库链接
