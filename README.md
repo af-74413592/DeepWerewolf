@@ -11,6 +11,7 @@
 #### 将本仓库下schemas.py  替换 verl包下 verl/workers/rollout/schemas.py
 #### 将本仓库下serving_chat.py  替换 sglang包下 srt/entrypoints/openai/serving_chat.py
 #### 将srt/server_args.py 231行改为 reasoning_parser: Optional[str] = "qwen3" 232行改为 tool_call_parser: Optional[str] = "qwen25"
+#### 将srt/entrypoints/openai/protocol.py 376行 改为role:  Literal["user", "assistant"]
 #####################################################################
 #### - flash-attn         version: v2.8.3
 ### 相关仓库链接
