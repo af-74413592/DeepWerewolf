@@ -858,10 +858,10 @@ class WerewolfAgent(LitAgent):
                                         # Disable auto broadcast to avoid leaking info
                                         all_players_hub.set_auto_broadcast(False)
 
-                                        await all_players_hub.broadcast(
-                                            await moderator(
-                                                Prompts.to_all_election_vote.format(names_to_str(active_candidates))),
-                                        )
+                                        # await all_players_hub.broadcast(
+                                        #     await moderator(
+                                        #         Prompts.to_all_election_vote.format(names_to_str(active_candidates))),
+                                        # )
 
                                         msgs_election_vote = await fanout_pipeline(
                                             voting_agents,
@@ -974,10 +974,10 @@ class WerewolfAgent(LitAgent):
                                                     # Disable auto broadcast to avoid leaking info
                                                     all_players_hub.set_auto_broadcast(False)
 
-                                                    await all_players_hub.broadcast(
-                                                        await moderator(
-                                                            Prompts.to_all_election_pk_vote.format(names_to_str(tied_candidates))),
-                                                    )
+                                                    # await all_players_hub.broadcast(
+                                                    #     await moderator(
+                                                    #         Prompts.to_all_election_pk_vote.format(names_to_str(tied_candidates))),
+                                                    # )
 
                                                     msgs_pk_vote = await fanout_pipeline(
                                                         voting_agents,
@@ -1425,9 +1425,9 @@ class WerewolfAgent(LitAgent):
                 # Disable auto broadcast to avoid leaking info
                 all_players_hub.set_auto_broadcast(False)
 
-                await all_players_hub.broadcast(
-                    await moderator(Prompts.to_all_vote.format(names_to_str(current_alive))),
-                )
+                # await all_players_hub.broadcast(
+                #     await moderator(Prompts.to_all_vote.format(names_to_str(current_alive))),
+                # )
 
                 # Voting
                 msgs_vote = await fanout_pipeline(
@@ -1537,9 +1537,9 @@ class WerewolfAgent(LitAgent):
                     # Disable auto broadcast to avoid leaking info
                     all_players_hub.set_auto_broadcast(False)
 
-                    await all_players_hub.broadcast(
-                        await moderator(Prompts.to_all_pk_vote.format(tied_names)),
-                    )
+                    # await all_players_hub.broadcast(
+                    #     await moderator(Prompts.to_all_pk_vote.format(tied_names)),
+                    # )
 
                     msgs_pk_vote = await fanout_pipeline(
                         voting_agents,  # 只有非PK台的玩家可以投票
@@ -1731,3 +1731,4 @@ class WerewolfAgent(LitAgent):
 if __name__ == "__main__":
 
     Trainer(n_workers=16).fit(WerewolfAgent(), "http://localhost:9999/")
+
