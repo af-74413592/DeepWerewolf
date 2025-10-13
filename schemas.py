@@ -128,14 +128,14 @@ class AsyncRolloutRequest(BaseModel):
                 msg["content"] = ""
 
             # 2. tool_calls.arguments 必须是 dict
-            # if "tool_calls" in msg:
-            #     for call in msg["tool_calls"]:
-            #         args = call["function"].get("arguments")
-            #         if isinstance(args, str):
-            #             try:
-            #                 call["function"]["arguments"] = json.loads(args)
-            #             except Exception:
-            #                 call["function"]["arguments"] = {}
+            if "tool_calls" in msg:
+                for call in msg["tool_calls"]:
+                    args = call["function"].get("arguments")
+                    if isinstance(args, str):
+                        try:
+                            call["function"]["arguments"] = json.loads(args)
+                        except Exception:
+                            call["function"]["arguments"] = {}
         values["messages"] = messages
         if not (messages := values.get("messages")):
             raise ValueError("messages is required for AsyncRolloutRequest initialization")
