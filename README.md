@@ -137,7 +137,7 @@ agent = ReActAgent(
 
 ### 二、安装agentscope框架 （需要手动修改）
 #### 核心修改 手动处理think消息（因为新版vllm不在支持--enable_thinging格式消息返回）
-#### src/agentscope/model/_openai_model.py _parse_openai_completion_response函数开头 改为
+#### src/agentscope/model/_openai_model.py _parse_openai_completion_response函数开头if choice.message.content:下 改为
 ```
 if choice.message.content:
         try:
