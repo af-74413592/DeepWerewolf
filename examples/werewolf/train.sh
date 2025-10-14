@@ -9,6 +9,7 @@ export ROLLOUT_TP_SIZE=1
 export EXPERIMENT_NAME=werewolf
 export PROJECT_NAME=AgentLightning
 export VLLM_FLASH_ATTN_VERSION=2
+export VLLM_USE_V1=1
 echo "Starting training script..."
 
 python -m agentlightning.verl \
