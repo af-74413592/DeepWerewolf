@@ -4,7 +4,7 @@
 #### - agent-lightning:  commit: 5724f63cfc75bcc2f4fb56958ef384d307717c18 | date: Sep 13, 2025 (或者直接pip install -e . 安装本仓库)
 #### - AgentScope:        commit: 458e8eedc94bba89bc3e4c6756e35fb4defbc0ac | date: Sep 15, 2025 （截至2025-9-30日的版本 v1.0.4 测试了都是没有api冲突的）
 #### - VERL:              version: v0.5.0
-#### - VLLM:              version: v0.10.2  （sglang的后端训练更稳定不容易崩溃，可以看sglang的分支）
+#### - VLLM:              version: v0.10.2  （sglang的后端训练更稳定不容易崩溃，可以看sglang的分支，但是32B的训练暂不支持）
 #### - flash-attn         version: v2.8.3
 ### 相关仓库链接
 #### - agent-lightning 官方: https://github.com/microsoft/agent-lightning
