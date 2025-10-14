@@ -26,7 +26,6 @@ python -m agentlightning.verl \
     data.max_prompt_length=14336 \
     data.max_response_length=2048 \
     data.truncation='middle' \
-    trainer.val_before_train=True \
     actor_rollout_ref.actor.optim.lr=1e-6 \
     actor_rollout_ref.ref.strategy=fsdp2 \
     actor_rollout_ref.actor.strategy=fsdp2 \
