@@ -162,7 +162,7 @@ class AgentLightningServer:
     and retrieval of results, providing a simple interface for the optimization logic.
     """
 
-    def __init__(self, host: str = "127.0.0.1", port: int = 8000, task_timeout_seconds: float = 300.0):
+    def __init__(self, host: str = "127.0.0.1", port: int = 8000, task_timeout_seconds: float = 6000.0):
         """
         Initializes the server controller.
 
