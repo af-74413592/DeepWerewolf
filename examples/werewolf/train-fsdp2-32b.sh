@@ -43,6 +43,7 @@ python -m agentlightning.verl \
     actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=8 \
     actor_rollout_ref.ref.fsdp_config.param_offload=False \
     actor_rollout_ref.actor.fsdp_config.offload_policy=True \
+    ++actor_rollout_ref.actor.fsdp_config.model_dtype=bfloat16 \
     algorithm.use_kl_in_reward=False \
     trainer.default_local_dir='/root/dataDisk/checkpoints' \
     trainer.max_actor_ckpt_to_keep=3 \
