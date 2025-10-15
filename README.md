@@ -137,14 +137,15 @@ agent = ReActAgent(
 ```
 llm_reward_system_prompt = "这里进行着一个LLM狼人杀游戏，history上下文太长就不展示了，你的职责就是判断模型的回答是否有游戏无关的胡言乱语（这里不包含<think>格式或者各种tool_call还有<|im_start|>assistant这种其他消息头，都是正常输出，只看思考和回答中的纯文本部分），或者模型没有按照中文来回答。还有文本的可读性。如果有这些情况，则输出Low Quality，没有则输出High Quality，无需对游戏行为决策做出判断。以下是模型回答：\n\n" + response
 
-            llm_quality_reward = llm_api(llm_reward_system_prompt)
-            import time
-            #防止高频访问
-            time.sleep(0.5)
-            if "Low Quality" in llm_quality_reward:
-                triplet.reward = triplet.reward - 5.0
-                print(f"WARNING: Low Quality detected: {response}")
+llm_quality_reward = llm_api(llm_reward_system_prompt)
+import time
+#防止高频访问
+time.sleep(0.5)
+if "Low Quality" in llm_quality_reward:
+    triplet.reward = triplet.reward - 5.0
+    print(f"WARNING: Low Quality detected: {response}")
 ```
+
 #### 这几行是调用外部llm打分。文本通顺性reward，酌情添加
 #### 注意如果更改训练模型，记得替换self.tokenizer
 
