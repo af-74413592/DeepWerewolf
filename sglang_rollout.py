@@ -314,7 +314,6 @@ class SGLangRollout(BaseRollout):
         self._verify_config(model_hf_config=model_hf_config)
         # initialize the inference engine
         self._init_inference_engine(trust_remote_code, actor_module, port)
-        self.openai_serving_chat = OpenAIServingChat(self._engine.tokenizer_manager,self._engine.template_manager)
         self._init_sampling_params(**kwargs)
 
         self.processing_class = processing_class
@@ -472,6 +471,7 @@ class SGLangRollout(BaseRollout):
                 # skip_tokenizer_init=self.config.mode == "async",
                 skip_tokenizer_init=False
             )
+            self.openai_serving_chat = OpenAIServingChat(self._engine.tokenizer_manager,self._engine.template_manager)
         else:
             self._engine = None
 
