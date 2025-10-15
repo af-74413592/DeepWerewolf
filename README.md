@@ -12,8 +12,6 @@
 #### 将本仓库下serving_chat.py  替换 sglang包下 srt/entrypoints/openai/serving_chat.py
 #### 将srt/server_args.py 231行改为 reasoning_parser: Optional[str] = "qwen3" 232行改为 tool_call_parser: Optional[str] = "qwen25"
 #### 将srt/entrypoints/openai/protocol.py 376行 改为role:  Literal["user", "assistant"]
-#### 与vllm不同，verl中sglang gpu_memory_utilization的定义改为 (total - dummy_usage) * gpu_memory_utilization 用于存储kv cache，因此要把这个参数开高到0.7以上
-#### 将参数offload到cpu，虽然会节省显存，但是cpu的内存压力可能会过大，导致ray worker崩溃。酌情选择开启
 #####################################################################
 #### - flash-attn         version: v2.8.3
 ### 相关仓库链接
