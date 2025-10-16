@@ -52,6 +52,14 @@ logger = agentlightning.configure_logger(name=__name__)
 
 from agentlightning.types import Triplet
 
+TRAIN_WERE_WOLF_FLAG = True
+
+TRAIN_HUMAN_FLAG = False
+
+TRAIN_WINNER_ONLY_FLAG = False
+
+TOKENIZER_PATH = "Qwen/Qwen3-8B"
+
 import requests
 def llm_api(system_prompt):
     url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
@@ -367,14 +375,14 @@ class WerewolfAgent(LitAgent):
     def __init__(self, trained_agents: str | None = None) -> None:
         super().__init__(trained_agents=trained_agents)
         self.triplet_exporter = TripletExporter()
-        self.tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B")
+        self.tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_PATH)
 
     def _process_triplets_with_rewards(self, wolf_win_flag: bool, NAME_TO_ROLE: dict) -> list[Triplet]:
         spans = self.tracer.get_last_trace()
         triplets = self.triplet_exporter.export(spans)
-        train_were_wolf_flag = True
-        train_human_flag = False
-        train_winner_only_flag = False #only work in both train
+        train_were_wolf_flag = TRAIN_WERE_WOLF_FLAG
+        train_human_flag = TRAIN_HUMAN_FLAG
+        train_winner_only_flag = TRAIN_WINNER_ONLY_FLAG #only work in both train
         assert train_were_wolf_flag or train_human_flag
         new_triplets= []
         last_error_index = []
@@ -1793,5 +1801,3 @@ class WerewolfAgent(LitAgent):
 if __name__ == "__main__":
 
     Trainer(n_workers=16).fit(WerewolfAgent(), "http://localhost:9999/")
-
-
