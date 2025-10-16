@@ -170,6 +170,9 @@ class AgentRunner(ParallelWorkerBase):
                 result = rollout_method(task.input, task.rollout_id, resources_update.resources)
                 rollout_obj = self._to_rollout_object(result, task.rollout_id)
                 end_time = time.time()
+
+                if not rollout_obj.triplets:
+                        raise Exception("empty triplets")
                 logger.info(
                     f"{self._log_prefix(rollout_id)} Completed in "
                     f"{end_time - start_time:.2f}s. Triplet length: "
