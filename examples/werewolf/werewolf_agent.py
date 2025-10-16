@@ -372,8 +372,14 @@ class WerewolfAgent(LitAgent):
     def _process_triplets_with_rewards(self, wolf_win_flag: bool, NAME_TO_ROLE: dict) -> list[Triplet]:
         spans = self.tracer.get_last_trace()
         triplets = self.triplet_exporter.export(spans)
+        train_were_wolf_flag = True
+        train_human_flag = False
+        train_winner_only_flag = False #only work in both train
+        assert train_were_wolf_flag or train_human_flag
         new_triplets= []
         last_error_index = []
+        were_wolf_only = []
+        human_only = []
         names = []
         for i,triplet in enumerate(triplets):
             prompt_ids = triplet.prompt.get("token_ids")
@@ -384,9 +390,9 @@ class WerewolfAgent(LitAgent):
             # if prompt_length >= 10240:  # 你的 max_prompt_length TODO: 过长上下文发送处理.拆掉上下文中的think
             #     print(f"WARNING: Prompt truncated! Original length: {prompt_length}")
             prompt = self.tokenizer.decode(prompt_ids)
-            # print(prompt)
+            print(prompt)
             response = self.tokenizer.decode(response_ids)
-            # print(response)
+            print(response)
             # 检查是否包含 ValidationError 信息，先检测错误，再看后面是否有成功调用
             if "Arguments Validation Error" in prompt:
                 import re
@@ -418,8 +424,14 @@ class WerewolfAgent(LitAgent):
             role = NAME_TO_ROLE[name]
             if role in ["werewolf", "wolf_king"]:
                 triplet.reward = 20.0 if wolf_win_flag else -10.0
+                were_wolf_only.append(i)
             else:
-                triplet.reward = -10.0 if wolf_win_flag else 10.0
+                if train_human_flag:
+                    triplet.reward = -10.0 if wolf_win_flag else 20.0
+                else:
+                    triplet.reward = -10.0 if wolf_win_flag else 10.0
+                human_only.append(i)
+
             llm_reward_system_prompt = "这里进行着一个LLM狼人杀游戏，history上下文太长就不展示了，你的职责就是判断模型的回答是否有游戏无关的胡言乱语（这里不包含<think>格式或者各种tool_call还有<|im_start|>assistant这种其他消息头，都是正常输出，只看思考和回答中的纯文本部分），或者模型没有按照中文来回答。还有文本的可读性。如果有这些情况，则输出Low Quality，没有则输出High Quality，无需对游戏行为决策做出判断。以下是模型回答：\n\n" + response
 
             llm_quality_reward = llm_api(llm_reward_system_prompt)
@@ -434,6 +446,29 @@ class WerewolfAgent(LitAgent):
             if j+1 < len(names):
                 if names[j] == names[j+1]:
                     new_triplets[j].reward = new_triplets[j].reward - 5.0
+        if train_were_wolf_flag and not train_human_flag:
+            wolf_triplets = [new_triplets[k] for k in were_wolf_only]
+            new_triplets = wolf_triplets
+        if train_human_flag and not train_were_wolf_flag:
+            human_triplets = [new_triplets[k] for k in human_only]
+            new_triplets = human_triplets
+        if train_were_wolf_flag and train_human_flag:
+            #随机抓好人或者狼人的轨迹，不要混在一起更新中
+            if not train_winner_only_flag:
+                import random
+                if random.random() < 0.5:
+                    human_triplets = [new_triplets[k] for k in human_only]
+                    new_triplets = human_triplets
+                else:
+                    wolf_triplets = [new_triplets[k] for k in were_wolf_only]
+                    new_triplets = wolf_triplets
+            else:
+                if wolf_win_flag:
+                    wolf_triplets = [new_triplets[k] for k in were_wolf_only]
+                    new_triplets = wolf_triplets
+                else:
+                    human_triplets = [new_triplets[k] for k in human_only]
+                    new_triplets = human_triplets
         return new_triplets
     
 
@@ -1758,4 +1793,3 @@ class WerewolfAgent(LitAgent):
 if __name__ == "__main__":
 
     Trainer(n_workers=16).fit(WerewolfAgent(), "http://localhost:9999/")
-
