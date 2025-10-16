@@ -246,9 +246,8 @@ class AgentRunner(ParallelWorkerBase):
                     #     new_result = random.sample(valid_result, 64)
                     # else:
                     #     new_result = valid_result
-                    # rollout_obj = self._to_rollout_object(new_result, task.rollout_id)
-
                     rollout_obj = self._to_rollout_object(result, task.rollout_id)
+                    # rollout_obj = self._to_rollout_object(new_result, task.rollout_id)
                     end_time = time.time()
                     logger.info(
                         f"{self._log_prefix(rollout_id)} Completed in "
@@ -268,7 +267,13 @@ class AgentRunner(ParallelWorkerBase):
                 else:
                     print("Warning: error occured ,empty triplets")
                     if MAX_TRY == 0:
-                        raise Exception(f"rollout_obj.triplets is EMPTY, {task.rollout_id} failed")
+                        print(f"{task.rollout_id} failed")
+                        rollout_obj.triplets = []
+                        try:
+                            self.agent.on_rollout_end(task, rollout_obj, self, self.tracer)
+                        except Exception:
+                            logger.exception(f"{self._log_prefix(rollout_id)} Exception during on_rollout_end hook.")
+                        await self.client.post_rollout_async(rollout_obj)
         return True
 
     async def iter_async(self) -> int:
