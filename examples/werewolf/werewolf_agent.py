@@ -427,7 +427,7 @@ class WerewolfAgent(LitAgent):
             #防止高频访问
             time.sleep(0.5)
             if "Low Quality" in llm_quality_reward:
-                triplet.reward = triplet.reward - 5.0
+                triplet.reward = triplet.reward - 10.0
                 print(f"WARNING: Low Quality detected: {response}")
             new_triplets.append(triplet)
         for j in last_error_index:
@@ -1758,3 +1758,4 @@ class WerewolfAgent(LitAgent):
 if __name__ == "__main__":
 
     Trainer(n_workers=16).fit(WerewolfAgent(), "http://localhost:9999/")
+
