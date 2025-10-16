@@ -251,6 +251,185 @@ trainer.default_local_dir='/root/dataDisk/checkpoints' \ 权重保存位置
 trainer.max_actor_ckpt_to_keep=3 \ 打开自动删除历史权重
 
 ```
+
+### 五、reward设计说明
+
+```
+def _process_triplets_with_rewards(self, wolf_win_flag: bool, NAME_TO_ROLE: dict) -> list[Triplet]:
+        spans = self.tracer.get_last_trace()
+        triplets = self.triplet_exporter.export(spans)
+        new_triplets= []
+        last_error_index = []
+        names = []
+        for i,triplet in enumerate(triplets):
+            prompt_ids = triplet.prompt.get("token_ids")
+            response_ids = triplet.response.get("token_ids", [])
+            # 添加日志检查
+            prompt_length = len(prompt_ids)
+            print(f"Prompt length: {prompt_length} tokens")
+            # if prompt_length >= 10240:  # 你的 max_prompt_length TODO: 过长上下文发送处理.拆掉上下文中的think
+            #     print(f"WARNING: Prompt truncated! Original length: {prompt_length}")
+            prompt = self.tokenizer.decode(prompt_ids)
+            # print(prompt)
+            response = self.tokenizer.decode(response_ids)
+            # print(response)
+            # 检查是否包含 ValidationError 信息，先检测错误，再看后面是否有成功调用
+            if "Arguments Validation Error" in prompt:
+                import re
+                # 找到最后一个 </history> 标签的位置
+                history_end = prompt.rfind('</history>')
+                if history_end != -1:
+                    # 在最后一个 </history> 之后查找
+                    history_content = prompt[history_end:]
+                    
+                    # 查找所有 ValidationError
+                    error_matches = list(re.finditer(r'Arguments Validation Error: ([^<]+)', history_content))
+                    if error_matches:
+                        # 取最后一个 ValidationError
+                        last_error = error_matches[-1]
+                        error_msg = last_error.group(1).strip()
+                        error_pos = last_error.end()
+                        
+                        # 在这个错误之后查找是否有成功的调用
+                        after_error = history_content[error_pos:]
+                        success_after_error = re.search(r'Successfully generated response\.', after_error)
+                        
+                        if not success_after_error:
+                            # 错误后面没有成功调用，说明这是最新的错误
+                            if i != 0:
+                                last_error_index.append(i-1)
+                                print(f"WARNING: Latest ValidationError detected: {error_msg}")
+            name = prompt.split("<history>\n主持人: [")[1].split(" ONLY")[0]
+            names.append(name)
+            role = NAME_TO_ROLE[name]
+            if role in ["werewolf", "wolf_king"]:
+                triplet.reward = 20.0 if wolf_win_flag else -10.0
+            else:
+                triplet.reward = -10.0 if wolf_win_flag else 10.0
+            llm_reward_system_prompt = "这里进行着一个LLM狼人杀游戏，history上下文太长就不展示了，你的职责就是判断模型的回答是否有游戏无关的胡言乱语（这里不包含<think>格式或者各种tool_call还有<|im_start|>assistant这种其他消息头，都是正常输出，只看思考和回答中的纯文本部分），或者模型没有按照中文来回答。还有文本的可读性。如果有这些情况，则输出Low Quality，没有则输出High Quality，无需对游戏行为决策做出判断。以下是模型回答：\n\n" + response
+
+            llm_quality_reward = llm_api(llm_reward_system_prompt)
+            import time
+            #防止高频访问
+            time.sleep(0.5)
+            if "Low Quality" in llm_quality_reward:
+                triplet.reward = triplet.reward - 10.0
+                print(f"WARNING: Low Quality detected: {response}")
+            new_triplets.append(triplet)
+        for j in last_error_index:
+            if j+1 < len(names):
+                if names[j] == names[j+1]:
+                    new_triplets[j].reward = new_triplets[j].reward - 5.0
+        return new_triplets
+```
+
+#### 原始的reward计算函数由胜负reward+格式reward+可读性reward组成，由于rollout中狼人和好人必然是一胜一败的关系，难以采到充分的样本，经测试后狼人和好人同时训练效果不佳。
+
+```
+    def _process_triplets_with_rewards(self, wolf_win_flag: bool, NAME_TO_ROLE: dict) -> list[Triplet]:
+        spans = self.tracer.get_last_trace()
+        triplets = self.triplet_exporter.export(spans)
+        train_were_wolf_flag = True
+        train_human_flag = False
+        train_winner_only_flag = False #only work in both train
+        assert train_were_wolf_flag or train_human_flag
+        new_triplets= []
+        last_error_index = []
+        were_wolf_only = []
+        human_only = []
+        names = []
+        for i,triplet in enumerate(triplets):
+            prompt_ids = triplet.prompt.get("token_ids")
+            response_ids = triplet.response.get("token_ids", [])
+            # 添加日志检查
+            prompt_length = len(prompt_ids)
+            print(f"Prompt length: {prompt_length} tokens")
+            # if prompt_length >= 10240:  # 你的 max_prompt_length TODO: 过长上下文发送处理.拆掉上下文中的think
+            #     print(f"WARNING: Prompt truncated! Original length: {prompt_length}")
+            prompt = self.tokenizer.decode(prompt_ids)
+            print(prompt)
+            response = self.tokenizer.decode(response_ids)
+            print(response)
+            # 检查是否包含 ValidationError 信息，先检测错误，再看后面是否有成功调用
+            if "Arguments Validation Error" in prompt:
+                import re
+                # 找到最后一个 </history> 标签的位置
+                history_end = prompt.rfind('</history>')
+                if history_end != -1:
+                    # 在最后一个 </history> 之后查找
+                    history_content = prompt[history_end:]
+                    
+                    # 查找所有 ValidationError
+                    error_matches = list(re.finditer(r'Arguments Validation Error: ([^<]+)', history_content))
+                    if error_matches:
+                        # 取最后一个 ValidationError
+                        last_error = error_matches[-1]
+                        error_msg = last_error.group(1).strip()
+                        error_pos = last_error.end()
+                        
+                        # 在这个错误之后查找是否有成功的调用
+                        after_error = history_content[error_pos:]
+                        success_after_error = re.search(r'Successfully generated response\.', after_error)
+                        
+                        if not success_after_error:
+                            # 错误后面没有成功调用，说明这是最新的错误
+                            if i != 0:
+                                last_error_index.append(i-1)
+                                print(f"WARNING: Latest ValidationError detected: {error_msg}")
+            name = prompt.split("<history>\n主持人: [")[1].split(" ONLY")[0]
+            names.append(name)
+            role = NAME_TO_ROLE[name]
+            if role in ["werewolf", "wolf_king"]:
+                triplet.reward = 20.0 if wolf_win_flag else -10.0
+                were_wolf_only.append(i)
+            else:
+                if train_human_flag:
+                    triplet.reward = -10.0 if wolf_win_flag else 20.0
+                else:
+                    triplet.reward = -10.0 if wolf_win_flag else 10.0
+                human_only.append(i)
+
+            llm_reward_system_prompt = "这里进行着一个LLM狼人杀游戏，history上下文太长就不展示了，你的职责就是判断模型的回答是否有游戏无关的胡言乱语（这里不包含<think>格式或者各种tool_call还有<|im_start|>assistant这种其他消息头，都是正常输出，只看思考和回答中的纯文本部分），或者模型没有按照中文来回答。还有文本的可读性。如果有这些情况，则输出Low Quality，没有则输出High Quality，无需对游戏行为决策做出判断。以下是模型回答：\n\n" + response
+
+            llm_quality_reward = llm_api(llm_reward_system_prompt)
+            import time
+            #防止高频访问
+            time.sleep(0.5)
+            if "Low Quality" in llm_quality_reward:
+                triplet.reward = triplet.reward - 10.0
+                print(f"WARNING: Low Quality detected: {response}")
+            new_triplets.append(triplet)
+        for j in last_error_index:
+            if j+1 < len(names):
+                if names[j] == names[j+1]:
+                    new_triplets[j].reward = new_triplets[j].reward - 5.0
+        if train_were_wolf_flag and not train_human_flag:
+            wolf_triplets = [new_triplets[k] for k in were_wolf_only]
+            new_triplets = wolf_triplets
+        if train_human_flag and not train_were_wolf_flag:
+            human_triplets = [new_triplets[k] for k in human_only]
+            new_triplets = human_triplets
+        if train_were_wolf_flag and train_human_flag:
+            #随机抓好人或者狼人的轨迹，不要混在一起更新中
+            if not train_winner_only_flag:
+                import random
+                if random.random() < 0.5:
+                    human_triplets = [new_triplets[k] for k in human_only]
+                    new_triplets = human_triplets
+                else:
+                    wolf_triplets = [new_triplets[k] for k in were_wolf_only]
+                    new_triplets = wolf_triplets
+            else:
+                if wolf_win_flag:
+                    wolf_triplets = [new_triplets[k] for k in were_wolf_only]
+                    new_triplets = wolf_triplets
+                else:
+                    human_triplets = [new_triplets[k] for k in human_only]
+                    new_triplets = human_triplets
+        return new_triplets
+```
+
+#### 经调整后，采取狼人好人分开训练的策略， train_were_wolf_flag train_human_flag train_winner_only_flag 分别设置为true false false单独训练狼人，和false true false单独训练好人，等待最后阶段都设置为true，丢掉失败的样例，混合训练好人和狼人胜利的所有样本。batchsize x rollout总数 单独狼人开了2x2，单独好人开了1x2，混合训练开了1x2。
 #################################################
 ![Agent-lightning-banner](docs/assets/readme-banner.png)
 
