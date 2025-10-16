@@ -1,362 +1,291 @@
-import random
-from contextlib import contextmanager
-from copy import deepcopy
-from typing import Dict, Tuple
+import asyncio
+import json
+import logging
+import os
+import time
+from contextlib import nullcontext
+from typing import List, Optional, Union, Dict, Any
 
-import numpy as np
-import torch
-from omegaconf import OmegaConf
-from pprint import pprint
-from tqdm import tqdm
+import agentops
 
-from codetiming import Timer
-from verl import DataProto
-from verl.protocol import pad_dataproto_to_divisor, unpad_dataproto
-from verl.trainer.ppo.ray_trainer import (
-    RayPPOTrainer,
-    AdvantageEstimator,
-    apply_kl_penalty,
-    compute_advantage,
-    compute_response_mask,
-)
-from verl.trainer.ppo.core_algos import agg_loss
-from verl.trainer.ppo.metric_utils import (
-    compute_data_metrics,
-    compute_throughout_metrics,
-    compute_timing_metrics,
-)
-from verl.utils.metric import reduce_metrics
-from verl.utils.tracking import Tracking
+from opentelemetry.sdk.trace import ReadableSpan
+from .client import AgentLightningClient
+from .litagent import LitAgent
+from .types import Rollout, Task, Triplet, RolloutRawResult
+from .types import ParallelWorkerBase
+from .tracer.base import BaseTracer
+from .tracer import TripletExporter
 
-from .daemon import AgentModeDaemon
+logger = logging.getLogger(__name__)
 
 
-@contextmanager
-def _timer(name: str, timing_raw: Dict[str, float]):
-    with Timer(name=name, logger=None) as timer:
-        yield
-    if name not in timing_raw:
-        timing_raw[name] = 0
-    timing_raw[name] += timer.last
+class AgentRunner(ParallelWorkerBase):
+    """Manages the agent's execution loop and integrates with AgentOps.
 
+    This class orchestrates the interaction between the agent (`LitAgent`) and
+    the server (`AgentLightningClient`). It handles polling for tasks, executing
+    the agent's logic, and reporting results back to the server. If enabled,
+    it will also automatically trace each rollout using AgentOps.
 
-class AgentLightningTrainer(RayPPOTrainer):
-    """
-    Specialized PPO trainer for agent-based reinforcement learning.
-
-    This trainer is designed specifically for scenarios where the model interacts with
-    external environments, tools, or APIs through an AgentLightningServer. It simplifies
-    the training loop by removing the complex conditional logic present in the original
-    RayPPOTrainer and focusing on the agent mode workflow.
-
-    Key differences from RayPPOTrainer:
-    1. Uses AgentModeDaemon for server communication
-    2. Simplified data flow without pop/union operations
-    3. Direct batch processing through agent daemon
-    4. Streamlined validation using agent_mode validation
+    Attributes:
+        agent: The `LitAgent` instance containing the agent's logic.
+        client: The `AgentLightningClient` for server communication.
+        tracer: The tracer instance for this runner/worker.
+        worker_id: An optional identifier for the worker process.
+        max_tasks: The maximum number of tasks to process before stopping.
     """
 
-    def _validate(self):
-        assert len(self.val_dataloader) == 1, "Please set val_batch_size to None for better throughput."
+    def __init__(
+        self,
+        agent: LitAgent,
+        client: AgentLightningClient,
+        tracer: BaseTracer,
+        triplet_exporter: TripletExporter,
+        worker_id: Optional[int] = None,
+        max_tasks: Optional[int] = None,
+    ):
+        super().__init__()
+        self.agent = agent
+        self.client = client
+        self.tracer = tracer
+        self.triplet_exporter = triplet_exporter
 
-        test_data = next(iter(self.val_dataloader))
-        test_batch = DataProto.from_single_dict(test_data)
+        # Worker-specific attributes
+        self.worker_id = worker_id
+        self.max_tasks = max_tasks
 
-        self.async_rollout_manager.wake_up()
-        self.agent_mode_daemon.set_up_data_and_server(
-            test_batch.non_tensor_batch,
-            self.async_rollout_manager.server_addresses,
-            is_train=False,
-        )
-        self.agent_mode_daemon.run_until_all_finished()
-        test_metrics = self.agent_mode_daemon.get_test_metrics()
-        self.agent_mode_daemon.clear_data_and_server()
-        self.async_rollout_manager.sleep()
-        return test_metrics
+    def _log_prefix(self, rollout_id: Optional[str] = None) -> str:
+        """Generates a standardized log prefix for the current worker."""
+        if self.worker_id is not None:
+            if rollout_id:
+                return f"[Worker {self.worker_id} | Rollout {rollout_id}]"
+            else:
+                return f"[Worker {self.worker_id}]"
+        if rollout_id:
+            return f"[Rollout {rollout_id}]"
+        return "[Default Worker]"
 
-    def _train_step(self, batch_dict: dict) -> dict:
-        # Isolate in a separate method to automatically recycle the variables before validation.
-        batch: DataProto = DataProto.from_single_dict(batch_dict)
-        metrics = {}
-        timing_raw = {}
+    def _to_rollout_object(
+        self,
+        result: RolloutRawResult,
+        rollout_id: str,
+    ) -> Rollout:
+        """Standardizes the agent's return value into a Rollout object.
 
-        with _timer("step", timing_raw):
+        Args:
+            result: The output from the agent's rollout method.
+            rollout_id: The unique identifier for the current task.
 
-            # When agent mode is enabled, we read the batch as it is.
-            gen_batch = batch
+        Returns:
+            A standardized `Rollout` object for reporting to the server.
+        """
+        trace: Any = None
+        final_reward: Optional[float] = None
+        triplets: Optional[List[Triplet]] = None
+        trace_spans: Optional[List[ReadableSpan]] = None
 
-            # generate a batch
-            with _timer("gen", timing_raw):
-                self.async_rollout_manager.wake_up()
-                self.agent_mode_daemon.set_up_data_and_server(
-                    gen_batch.non_tensor_batch, self.async_rollout_manager.server_addresses
+        # Handle different types of results from the agent
+        # Case 1: result is a float (final reward)
+        if isinstance(result, float):
+            final_reward = result
+        # Case 2: result is a list of Triplets
+        if isinstance(result, list) and all(isinstance(t, Triplet) for t in result):
+            triplets = result  # type: ignore
+        # Case 3: result is a list of ReadableSpan (OpenTelemetry spans)
+        if isinstance(result, list) and all(isinstance(t, ReadableSpan) for t in result):
+            trace_spans = result  # type: ignore
+            trace = [json.loads(readable_span.to_json()) for readable_span in trace_spans]  # type: ignore
+        # Case 4: result is a list of dict (trace JSON)
+        if isinstance(result, list) and all(isinstance(t, dict) for t in result):
+            trace = result
+        # Case 5: result is a Rollout object
+        if isinstance(result, Rollout):
+            final_reward = result.final_reward
+            triplets = result.triplets
+            trace = result.trace
+
+        # If the agent has tracing enabled, use the tracer's last trace if not already set
+        if self.tracer and (trace is None or trace_spans is None):
+            spans = self.tracer.get_last_trace()
+            if spans:
+                trace = [json.loads(readable_span.to_json()) for readable_span in spans]
+                trace_spans = spans
+
+        # Always extract triplets from the trace using TripletExporter
+        # if trace_spans:
+        #     triplets = self.triplet_exporter.export(trace_spans)
+
+        # If the agent has triplets, use the last one for final reward if not set
+        if triplets and triplets[-1].reward is not None and final_reward is None:
+            final_reward = triplets[-1].reward
+
+        # Create the Rollout object with standardized fields
+        result_dict: Dict[str, Any] = {
+            "rollout_id": rollout_id,
+        }
+        if final_reward is not None:
+            result_dict["final_reward"] = final_reward
+        if triplets is not None:
+            result_dict["triplets"] = triplets
+        if trace is not None:
+            result_dict["trace"] = trace
+
+        if isinstance(result, Rollout):
+            return result.model_copy(update=result_dict)
+        return Rollout(**result_dict)
+
+    def run(self) -> bool:
+        """Poll the task and rollout once synchronously."""
+        self.agent.set_runner(self)  # Ensure the agent has a reference to this runner
+
+        task = self.client.poll_next_task()
+        if task is None:
+            logger.info(f"{self._log_prefix()} Poll returned no task. Exiting.")
+            return False
+        rollout_id = task.rollout_id
+
+        resources_id = task.resources_id
+        resources_update = None
+        if resources_id:
+            resources_update = self.client.get_resources_by_id(resources_id)
+        else:
+            logger.debug(f"{self._log_prefix(rollout_id)} No 'resources_id'. Fetching latest resources.")
+            resources_update = self.client.get_latest_resources()
+        if not resources_update:
+            logger.error(f"{self._log_prefix(rollout_id)} Failed to fetch resources. Skipping.")
+            return False
+
+        rollout_obj = Rollout(rollout_id=task.rollout_id)  # Default empty rollout
+
+        try:
+            try:
+                self.agent.on_rollout_start(task, self, self.tracer)
+            except Exception:
+                logger.exception(f"{self._log_prefix(rollout_id)} Exception during on_rollout_start hook.")
+
+            with self.tracer.trace_context(name=f"rollout_{rollout_id}"):
+                start_time = time.time()
+                rollout_method = self.agent.training_rollout if task.mode == "train" else self.agent.validation_rollout
+                # Pass the task input, not the whole task object
+                result = rollout_method(task.input, task.rollout_id, resources_update.resources)
+                rollout_obj = self._to_rollout_object(result, task.rollout_id)
+                end_time = time.time()
+                logger.info(
+                    f"{self._log_prefix(rollout_id)} Completed in "
+                    f"{end_time - start_time:.2f}s. Triplet length: "
+                    f"{len(rollout_obj.triplets) if rollout_obj.triplets is not None else 'N/A'}. "
+                    f"Reward: {rollout_obj.final_reward}"
                 )
-                self.agent_mode_daemon.run_until_all_finished()
-                test_metrics = self.agent_mode_daemon.get_test_metrics()
-                metrics.update(test_metrics)
-                batch, agent_metrics = self.agent_mode_daemon.get_train_data_batch(
-                    max_prompt_length=self.config.data.max_prompt_length,
-                    max_response_length=self.config.data.max_response_length,
-                    device=gen_batch.batch["fake_ids"].device,
-                )
-                metrics.update(agent_metrics)
-                self.agent_mode_daemon.clear_data_and_server()
-                self.async_rollout_manager.sleep()
 
-            if self.config.algorithm.adv_estimator == AdvantageEstimator.REMAX:
-                with _timer("gen_max", timing_raw):
-                    gen_baseline_batch = deepcopy(gen_batch)
-                    gen_baseline_batch.meta_info["do_sample"] = False
-                    gen_baseline_output = self.actor_rollout_wg.generate_sequences(gen_baseline_batch)
+        except Exception:
+            logger.exception(f"{self._log_prefix(rollout_id)} Exception during rollout.")
+        finally:
+            try:
+                self.agent.on_rollout_end(task, rollout_obj, self, self.tracer)
+            except Exception:
+                logger.exception(f"{self._log_prefix(rollout_id)} Exception during on_rollout_end hook.")
+            self.client.post_rollout(rollout_obj)
 
-                    batch = batch.union(gen_baseline_output)
-                    reward_baseline_tensor = self.reward_fn(batch)
-                    reward_baseline_tensor = reward_baseline_tensor.sum(dim=-1)
+        return True
 
-                    batch.pop(batch_keys=list(gen_baseline_output.batch.keys()))
+    def iter(self) -> int:
+        """Executes the synchronous polling and rollout loop."""
+        num_tasks_processed = 0
+        logger.info(f"{self._log_prefix()} Started sync rollouts (max: {self.max_tasks or 'unlimited'}).")
 
-                    batch.batch["reward_baselines"] = reward_baseline_tensor
+        while self.max_tasks is None or num_tasks_processed < self.max_tasks:
+            if self.run():
+                num_tasks_processed += 1
 
-                    del gen_baseline_batch, gen_baseline_output
+            if num_tasks_processed % 10 == 0 or num_tasks_processed == 1:
+                logger.info(f"{self._log_prefix()} Progress: {num_tasks_processed}/{self.max_tasks or 'unlimited'}")
 
-            # uid is used for algorithm like GRPO, should be aligned to data id
-            batch.non_tensor_batch["uid"] = batch.non_tensor_batch["data_id_list"]
+        logger.info(f"{self._log_prefix()} Finished sync rollouts. Processed {num_tasks_processed} tasks.")
+        return num_tasks_processed
 
-            # batch.batch["response_mask"] = compute_response_mask(batch)
+    async def run_async(self) -> bool:
+        """Poll the task and rollout once."""
+        self.agent.set_runner(self)  # Ensure the agent has a reference to this runner
 
-            # compute global_valid tokens
-            batch.meta_info["global_token_num"] = torch.sum(batch.batch["attention_mask"], dim=-1).tolist()
+        task = await self.client.poll_next_task_async()
+        if task is None:
+            logger.info(f"{self._log_prefix()} Poll returned no task. Exiting.")
+            return False
+        rollout_id = task.rollout_id
 
-            with _timer("reward", timing_raw):
-                # compute reward model score
-                if self.use_rm:
-                    reward_tensor = self.rm_wg.compute_rm_score(batch)
-                    batch = batch.union(reward_tensor)
+        resources_id = task.resources_id
+        resources_update = None
+        if resources_id:
+            resources_update = await self.client.get_resources_by_id_async(resources_id)
+        else:
+            logger.debug(f"{self._log_prefix(rollout_id)} No 'resources_id'. Fetching latest resources.")
+            resources_update = await self.client.get_latest_resources_async()
+        if not resources_update:
+            logger.error(f"{self._log_prefix(rollout_id)} Failed to fetch resources. Skipping.")
+            return False
 
-                reward_extra_infos_dict = {}
-
-            # for agent mode, pad the lengths to calculate old log prob, ref, and values
-            batch, pad_size = pad_dataproto_to_divisor(batch, self.actor_rollout_wg.world_size)
-
-            # recompute old_log_probs
-            with _timer("old_log_prob", timing_raw):
-                print(batch)
-                old_log_prob = self.actor_rollout_wg.compute_log_prob(batch)
-                entropys = old_log_prob.batch["entropys"]
-                response_masks = batch.batch["response_mask"]
-                loss_agg_mode = self.config.actor_rollout_ref.actor.loss_agg_mode
-                entropy_loss = agg_loss(loss_mat=entropys, loss_mask=response_masks, loss_agg_mode=loss_agg_mode)
-                old_log_prob_metrics = {"actor/entropy_loss": entropy_loss.detach().item()}
-                metrics.update(old_log_prob_metrics)
-                old_log_prob.batch.pop("entropys")
-                batch = batch.union(old_log_prob)
-
-            if self.use_reference_policy:
-                # compute reference log_prob
-                with _timer("ref", timing_raw):
-                    ref_log_prob = self.ref_policy_wg.compute_ref_log_prob(batch)
-                    batch = batch.union(ref_log_prob)
-
-            # compute values
-            if self.use_critic:
-                with _timer("values", timing_raw):
-                    values = self.critic_wg.compute_values(batch)
-                    batch = batch.union(values)
-
-            # for agent mode, unpad to calculate adv
-            # it is important, as adv should be based on the raw traces
-            batch = unpad_dataproto(batch, pad_size=pad_size)
-
-            with _timer("adv", timing_raw):
-                # if agent_mode is enabled, there is already token_level_scores
-                # token_level_scores is not needed to compute here
-
-                # compute rewards. apply_kl_penalty if available
-                if self.config.algorithm.use_kl_in_reward:
-                    batch, kl_metrics = apply_kl_penalty(
-                        batch, kl_ctrl=self.kl_ctrl_in_reward, kl_penalty=self.config.algorithm.kl_penalty
+        rollout_obj = Rollout(rollout_id=task.rollout_id)  # Default empty rollout
+        try:
+            self.agent.on_rollout_start(task, self, self.tracer)
+        except Exception:
+            logger.exception(f"{self._log_prefix(rollout_id)} Exception during on_rollout_start hook.")
+        MAX_TRY=3
+        while MAX_TRY > 0:
+            try:
+                with self.tracer.trace_context(name=f"rollout_{rollout_id}"):
+                    start_time = time.time()
+                    rollout_method = (
+                        self.agent.training_rollout_async if task.mode == "train" else self.agent.validation_rollout_async
                     )
-                    metrics.update(kl_metrics)
+                    # Pass the task input, not the whole task object
+                    result = await rollout_method(task.input, task.rollout_id, resources_update.resources)
+                    # valid_result = [t for t in result if len(t.prompt.get("token_ids")) + len(t.response.get("token_ids")) <= 10000]
+                    # if len(valid_result) > 64:
+                    #     #降低最大rollout
+                    #     import random
+                    #     new_result = random.sample(valid_result, 64)
+                    # else:
+                    #     new_result = valid_result
+                    rollout_obj = self._to_rollout_object(result, task.rollout_id)
+                    # rollout_obj = self._to_rollout_object(new_result, task.rollout_id)
+                    end_time = time.time()
+                    logger.info(
+                        f"{self._log_prefix(rollout_id)} Completed in "
+                        f"{end_time - start_time:.2f}s. Reward: {rollout_obj.final_reward}"
+                    )
+                    break
+            except Exception:
+                logger.exception(f"{self._log_prefix(rollout_id)} Exception during rollout.")
+                MAX_TRY = MAX_TRY - 1
+            finally:
+                if rollout_obj.triplets:
+                    try:
+                        self.agent.on_rollout_end(task, rollout_obj, self, self.tracer)
+                    except Exception:
+                        logger.exception(f"{self._log_prefix(rollout_id)} Exception during on_rollout_end hook.")
+                    await self.client.post_rollout_async(rollout_obj)
                 else:
-                    batch.batch["token_level_rewards"] = batch.batch["token_level_scores"]
+                    print("Warning: error occured ,empty triplets")
+                    if MAX_TRY == 0:
+                        print(f"{task.rollout_id} failed")
+                        rollout_obj.triplets = []
+                        try:
+                            self.agent.on_rollout_end(task, rollout_obj, self, self.tracer)
+                        except Exception:
+                            logger.exception(f"{self._log_prefix(rollout_id)} Exception during on_rollout_end hook.")
+                        await self.client.post_rollout_async(rollout_obj)
+        return True
 
-                # compute advantages, executed on the driver process
+    async def iter_async(self) -> int:
+        """Executes the asynchronous polling and rollout loop."""
+        num_tasks_processed = 0
+        logger.info(f"{self._log_prefix()} Started async rollouts (max: {self.max_tasks or 'unlimited'}).")
 
-                norm_adv_by_std_in_grpo = self.config.algorithm.get(
-                    "norm_adv_by_std_in_grpo", True
-                )  # GRPO adv normalization factor
+        while self.max_tasks is None or num_tasks_processed < self.max_tasks:
+            if await self.run_async():
+                num_tasks_processed += 1
 
-                batch = compute_advantage(
-                    batch,
-                    adv_estimator=self.config.algorithm.adv_estimator,
-                    gamma=self.config.algorithm.gamma,
-                    lam=self.config.algorithm.lam,
-                    num_repeat=self.config.actor_rollout_ref.rollout.n,
-                    norm_adv_by_std_in_grpo=norm_adv_by_std_in_grpo,
-                    config=self.config.algorithm,
-                )
-
-            # after advantages are assinged, we begin to drop (1) long prompt (2) floor to ppo minisize
-            keep_indices = (~batch.batch["is_drop_mask"]).nonzero(as_tuple=True)[0]
-            metrics["agent_mode/n_dropped_sample_because_of_prompt"] = (
-                batch.batch["is_drop_mask"].shape[0] - keep_indices.shape[0]
-            )
-            batch = batch[keep_indices]
-            # next, round to minibatch size
-            mini_batch_size = self.config.actor_rollout_ref.actor.ppo_mini_batch_size
-            n_transition = len(batch)
-            random_indices = list(range(n_transition))
-            random.shuffle(random_indices)
-            batch.reorder(torch.tensor(random_indices).type(torch.int32))
-            n_remained_transition = n_transition // mini_batch_size * mini_batch_size
-            batch = batch[list(range(n_remained_transition))]
-            metrics["agent_mode/n_dropped_sample_because_of_mini_batch"] = n_transition - n_remained_transition
-
-            # Agent mode note: Change the order of balance batch;
-            #     1. first calculate advantage
-            #     2. then drop the samples (too long prompt & floor to ppo minisize)
-            #     3. balance
-            # balance the number of valid tokens on each dp rank.
-            # Note that this breaks the order of data inside the batch.
-            # Please take care when you implement group based adv computation such as GRPO and rloo
-            # if self.config.trainer.balance_batch:
-            #     self._balance_batch(batch, metrics=metrics)
-
-            # update critic
-            if self.use_critic:
-                with _timer("update_critic", timing_raw):
-                    critic_output = self.critic_wg.update_critic(batch)
-                critic_output_metrics = reduce_metrics(critic_output.meta_info["metrics"])
-                metrics.update(critic_output_metrics)
-
-            # implement critic warmup
-            if self.config.trainer.critic_warmup <= self.global_steps:
-                # update actor
-                with _timer("update_actor", timing_raw):
-                    batch.meta_info["multi_turn"] = self.config.actor_rollout_ref.rollout.multi_turn.enable
-                    actor_output = self.actor_rollout_wg.update_actor(batch)
-                actor_output_metrics = reduce_metrics(actor_output.meta_info["metrics"])
-                metrics.update(actor_output_metrics)
-
-            # Log rollout generations if enabled
-            rollout_data_dir = self.config.trainer.get("rollout_data_dir", None)
-            if rollout_data_dir:
-                with _timer("dump_rollout_generations", timing_raw):
-                    print(batch.batch.keys())
-                    inputs = self.tokenizer.batch_decode(batch.batch["prompts"], skip_special_tokens=True)
-                    outputs = self.tokenizer.batch_decode(batch.batch["responses"], skip_special_tokens=True)
-                    scores = batch.batch["token_level_scores"].sum(-1).cpu().tolist()
-                    self._dump_generations(
-                        inputs=inputs,
-                        outputs=outputs,
-                        scores=scores,
-                        reward_extra_infos_dict=reward_extra_infos_dict,
-                        dump_path=rollout_data_dir,
-                    )
-
-        # compute training metrics
-        metrics.update(compute_data_metrics(batch=batch, use_critic=self.use_critic))
-        metrics.update(compute_timing_metrics(batch=batch, timing_raw=timing_raw))
-        # TODO: implement actual tflpo and theoretical tflpo
-        n_gpus = self.resource_pool_manager.get_n_gpus()
-        metrics.update(compute_throughout_metrics(batch=batch, timing_raw=timing_raw, n_gpus=n_gpus))
-
-        return metrics
-
-    def fit(self):
-        logger = Tracking(
-            project_name=self.config.trainer.project_name,
-            experiment_name=self.config.trainer.experiment_name,
-            default_backend=self.config.trainer.logger,
-            config=OmegaConf.to_container(self.config, resolve=True),
-        )
-
-        self.global_steps = 0
-
-        # load checkpoint before doing anything
-        self._load_checkpoint()
-
-        assert self.async_rollout_mode, "If agent mode is enabled, async server must be enabled"
-        self.agent_mode_daemon = AgentModeDaemon(
-            self.config.agentlightning.port,
-            self.config.actor_rollout_ref.rollout.n,
-            train_information={
-                # Note (Zhiyuan): To avoid further patch into vllm async server, using the same sentence to get the naming here.
-                # However, it is possible that verl updates the naming and causes incompatibility.
-                # Reference: https://github.com/volcengine/verl/blob/5b5e09d9cc20625e436d01f69d9cc739ff681c54/verl/workers/rollout/vllm_rollout/vllm_async_server.py#L217
-                "model": "/".join(self.config.actor_rollout_ref.model.path.split("/")[-2:]),
-                "temperature": self.config.actor_rollout_ref.rollout.temperature,
-            },
-            tokenizer=self.tokenizer,
-            mini_batch_size=self.config.actor_rollout_ref.actor.ppo_mini_batch_size,
-            pad_token_id=self.tokenizer.pad_token_id,
-        )
-        self.agent_mode_daemon.start()
-
-        # perform validation before training
-        # currently, we only support validation using the reward_function.
-        # if self.val_reward_fn is not None and self.config.trainer.get("val_before_train", True):
-        #     val_metrics = self._validate()
-        #     assert val_metrics, f"{val_metrics=}"
-        #     pprint(f"Initial validation metrics: {val_metrics}")
-        #     logger.log(data=val_metrics, step=self.global_steps)
-        #     if self.config.trainer.get("val_only", False):
-        #         return
-
-        # add tqdm
-        progress_bar = tqdm(total=self.total_training_steps, initial=self.global_steps, desc="Training Progress")
-
-        # we start from step 1
-        self.global_steps += 1
-        last_val_metrics = None
-
-        for epoch in range(self.config.trainer.total_epochs):
-            for batch_dict in self.train_dataloader:
-                metrics = {}
-                timing_raw = {}
-                is_last_step = self.global_steps >= self.total_training_steps
-                print("**********************Start Training*******************")
-                # train step
-                metrics = self._train_step(batch_dict)
-
-                # validate
-                if (
-                    self.val_reward_fn is not None
-                    and self.config.trainer.test_freq > 0
-                    and (is_last_step or self.global_steps % self.config.trainer.test_freq == 0)
-                ):
-                    with _timer("validate", timing_raw):
-                        val_metrics: dict = self._validate()
-                        if is_last_step:
-                            last_val_metrics = val_metrics
-                    metrics.update(val_metrics)
-
-                if self.config.trainer.save_freq > 0 and (
-                    is_last_step or self.global_steps % self.config.trainer.save_freq == 0
-                ):
-                    with _timer("save_checkpoint", timing_raw):
-                        self._save_checkpoint()
-
-                # step metrics
-                metrics.update(
-                    {
-                        "training/global_step": self.global_steps,
-                        "training/epoch": epoch,
-                    }
-                )
-
-                # TODO: make a canonical logger that supports various backend
-                logger.log(data=metrics, step=self.global_steps)
-
-                if is_last_step:
-                    pprint(f"Final validation metrics: {last_val_metrics}")
-                    progress_bar.close()
-
-                    # This exit logic is to ensure a robust CI.
-                    pprint(f"Flush the logger...")
-                    del logger  # Make sure the loggers are flushed and closed properly
-                    pprint(f"Training finished at step {self.global_steps}.")
-                    return
-
-                progress_bar.update(1)
-                self.global_steps += 1
+            if num_tasks_processed % 10 == 0 or num_tasks_processed == 1:
+                logger.info(f"{self._log_prefix()} Progress: {num_tasks_processed}/{self.max_tasks or 'unlimited'}")
+        logger.info(f"{self._log_prefix()} Finished async rollouts. Processed {num_tasks_processed} tasks.")
+        return num_tasks_processed
