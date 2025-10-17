@@ -435,9 +435,9 @@ class WerewolfAgent(LitAgent):
                 were_wolf_only.append(i)
             else:
                 if train_human_flag and not train_were_wolf_flag:
-                    triplet.reward = -10.0 if wolf_win_flag else 20.0
+                    triplet.reward = -10.0 if wolf_win_flag else 10.0 #压低好人胜利的基础分值
                 else:
-                    triplet.reward = -10.0 if wolf_win_flag else 15.0
+                    triplet.reward = -10.0 if wolf_win_flag else 15.0 #同时训练时候，略微调高一点好人的分值，不让狼人分值差异过大
                 human_only.append(i)
 
             llm_reward_system_prompt = "这里进行着一个LLM狼人杀游戏，history上下文太长就不展示了，你的职责就是判断模型的回答是否有游戏无关的胡言乱语（这里不包含<think>格式或者各种tool_call还有<|im_start|>assistant这种其他消息头，都是正常输出，只看思考和回答中的纯文本部分），或者模型没有按照中文来回答。还有文本的可读性。如果有这些情况，则输出Low Quality，没有则输出High Quality，无需对游戏行为决策做出判断。以下是模型回答：\n\n" + response
@@ -1801,5 +1801,6 @@ class WerewolfAgent(LitAgent):
 if __name__ == "__main__":
 
     Trainer(n_workers=16).fit(WerewolfAgent(), "http://localhost:9999/")
+
 
 
