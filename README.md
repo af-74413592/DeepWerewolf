@@ -445,15 +445,22 @@ def _process_triplets_with_rewards(self, wolf_win_flag: bool, NAME_TO_ROLE: dict
             human_triplets = [new_triplets[k] for k in human_only]
             new_triplets = human_triplets
         if train_were_wolf_flag and train_human_flag:
-            #随机抓好人或者狼人的轨迹，不要混在一起更新中
             if not train_winner_only_flag:
                 import random
-                if random.random() < 0.5:
-                    human_triplets = [new_triplets[k] for k in human_only]
-                    new_triplets = human_triplets
+                if random.random() > 0.3:
+                    if wolf_win_flag:
+                        wolf_triplets = [new_triplets[k] for k in were_wolf_only]
+                        new_triplets = wolf_triplets
+                    else:
+                        human_triplets = [new_triplets[k] for k in human_only]
+                        new_triplets = human_triplets
                 else:
-                    wolf_triplets = [new_triplets[k] for k in were_wolf_only]
-                    new_triplets = wolf_triplets
+                    if not wolf_win_flag:
+                        wolf_triplets = [new_triplets[k] for k in were_wolf_only]
+                        new_triplets = wolf_triplets
+                    else:
+                        human_triplets = [new_triplets[k] for k in human_only]
+                        new_triplets = human_triplets
             else:
                 if wolf_win_flag:
                     wolf_triplets = [new_triplets[k] for k in were_wolf_only]
@@ -464,7 +471,7 @@ def _process_triplets_with_rewards(self, wolf_win_flag: bool, NAME_TO_ROLE: dict
         return new_triplets
 ```
 
-#### 经调整后，采取狼人好人分开训练的策略， train_were_wolf_flag train_human_flag train_winner_only_flag 分别设置为true false false单独训练狼人，和false true false单独训练好人，等待最后阶段都设置为true，丢掉失败的样例，混合训练好人和狼人胜利的所有样本。batchsize x rollout总数 单独狼人开了2x2，单独好人开了1x2，混合训练开了1x2。
+#### 经调整后，采取狼人好人分开训练的策略， train_were_wolf_flag train_human_flag train_winner_only_flag 分别设置为true false false单独训练狼人，和false true false单独训练好人，~~等待最后阶段都设置为true，丢掉失败的样例，混合训练好人和狼人胜利的所有样本。~~ 还是得混一点失败的。  batchsize x rollout总数 单独狼人开了2x2，单独好人开了1x2，混合训练开了1x8（随机丢弃一些限制总数）。
 #################################################
 ![Agent-lightning-banner](docs/assets/readme-banner.png)
 
