@@ -214,7 +214,7 @@ for tool_call in choice.message.tool_calls or []:
                         "Failed parse arguments to a valid dict in the tool_call message, skipped."
                     )
 ```
-
+#### 还有一种更简单的办法 在src/agentscope/agent/_react_agent.py 的 generate_response函数下 加上 response = "" if response == None else response
 ### 其他改动（可选）压缩历史消息防止报错
 
 #### 处理过长的prompt：src/agentscope/model/openai_model.py OpenAIChatModel 的__call_ 函数
