@@ -458,15 +458,22 @@ class WerewolfAgent(LitAgent):
             human_triplets = [new_triplets[k] for k in human_only]
             new_triplets = human_triplets
         if train_were_wolf_flag and train_human_flag:
-            #随机抓好人或者狼人的轨迹，不要混在一起更新中
             if not train_winner_only_flag:
                 import random
-                if random.random() < 0.5:
-                    human_triplets = [new_triplets[k] for k in human_only]
-                    new_triplets = human_triplets
+                if random.random() > 0.3:
+                    if wolf_win_flag:
+                        wolf_triplets = [new_triplets[k] for k in were_wolf_only]
+                        new_triplets = wolf_triplets
+                    else:
+                        human_triplets = [new_triplets[k] for k in human_only]
+                        new_triplets = human_triplets
                 else:
-                    wolf_triplets = [new_triplets[k] for k in were_wolf_only]
-                    new_triplets = wolf_triplets
+                    if not wolf_win_flag:
+                        wolf_triplets = [new_triplets[k] for k in were_wolf_only]
+                        new_triplets = wolf_triplets
+                    else:
+                        human_triplets = [new_triplets[k] for k in human_only]
+                        new_triplets = human_triplets
             else:
                 if wolf_win_flag:
                     wolf_triplets = [new_triplets[k] for k in were_wolf_only]
@@ -1798,6 +1805,7 @@ class WerewolfAgent(LitAgent):
 if __name__ == "__main__":
 
     Trainer(n_workers=16).fit(WerewolfAgent(), "http://localhost:9999/")
+
 
 
 
