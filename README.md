@@ -179,7 +179,7 @@ if choice.message.content:
 ```
 #### 其他改动(建议）一个更安全的toolcall
 ```
-            for tool_call in choice.message.tool_calls or []:
+for tool_call in choice.message.tool_calls or []:
                 try:
                     arguments_dict = _json_loads_with_repair(
                             tool_call.function.arguments,
@@ -189,6 +189,9 @@ if choice.message.content:
                             "Failed parse arguments to a valid dict in the tool_call message, skipped."
                         )
                 if arguments_dict != {}:
+                    for key,value in arguments_dict.items():
+                        if key == "response" and value == None:
+                            arguments_dict["response"] = ""
                     content_blocks.append(
                         ToolUseBlock(
                             type="tool_use",
