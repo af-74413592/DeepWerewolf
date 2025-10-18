@@ -177,7 +177,33 @@ if choice.message.content:
                 ),
         )
 ```
-### 其他改动（可选）压缩历史消息防止报错
+#### 其他改动(建议）一个更安全的toolcall
+```
+            for tool_call in choice.message.tool_calls or []:
+                try:
+                    arguments_dict = _json_loads_with_repair(
+                            tool_call.function.arguments,
+                        )
+                except:
+                    logger.warning(
+                            "Failed parse arguments to a valid dict in the tool_call message, skipped."
+                        )
+                if arguments_dict != {}:
+                    content_blocks.append(
+                        ToolUseBlock(
+                            type="tool_use",
+                            id=tool_call.id,
+                            name=tool_call.function.name,
+                            input=arguments_dict,
+                        ),
+                    )
+                else:
+                    logger.warning(
+                        "Failed parse arguments to a valid dict in the tool_call message, skipped."
+                    )
+```
+
+#### 其他改动（可选）压缩历史消息防止报错
 
 #### 处理过长的prompt：src/agentscope/model/openai_model.py OpenAIChatModel 的__call_ 函数
 ```
