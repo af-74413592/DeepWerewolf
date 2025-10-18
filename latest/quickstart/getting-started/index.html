@@ -1058,7 +1058,7 @@
 <p>This guide walks you through building your first Agent Lightning application - a simple prompt optimization system that finds the best system prompt for an AI agent.</p>
 <h2 id="what-youll-build">What You'll Build<a class="headerlink" href="#what-youll-build" title="Permanent link">&para;</a></h2>
 <p>You'll create a distributed training system with a server that manages optimization algorithms and tasks, a client with multiple workers that execute tasks in parallel, and built-in telemetry for monitoring and debugging.</p>
-<p>Before starting, ensure you have Python 3.10 or later, Agent Lightning installed (<code>pip install agentlightning</code>), and an OpenAI API key. The complete code is available in the <a href="https://github.com/microsoft/agent-lightning/tree/6cf0a3a70e4dfa63670592091fae507e24478f04/examples/apo">examples/apo</a> directory.</p>
+<p>Before starting, ensure you have Python 3.10 or later, Agent Lightning installed (<code>pip install agentlightning</code>), and an OpenAI API key. The complete code is available in the <a href="https://github.com/microsoft/agent-lightning/tree/1cb764261060f29f4e01b6537122d9570b2133de/examples/apo">examples/apo</a> directory.</p>
 <h2 id="part-1-building-your-agent">Part 1: Building Your Agent<a class="headerlink" href="#part-1-building-your-agent" title="Permanent link">&para;</a></h2>
 <p>Let's start by creating a simple agent that can answer questions using OpenAI's API. Your agent needs to inherit from <code>LitAgent</code> and implement a <code>training_rollout</code> method.</p>
 <h3 id="step-1-create-your-agent-class">Step 1: Create Your Agent Class<a class="headerlink" href="#step-1-create-your-agent-class" title="Permanent link">&para;</a></h3>
@@ -1150,7 +1150,7 @@
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best prompt: &#39;</span><span class="si">{</span><span class="n">best_prompt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; with reward </span><span class="si">{</span><span class="n">best_prompt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="running-your-system">Running Your System<a class="headerlink" href="#running-your-system" title="Permanent link">&para;</a></h2>
-<p>The <a href="https://github.com/microsoft/agent-lightning/tree/6cf0a3a70e4dfa63670592091fae507e24478f04/examples/apo">Complete example code</a> can be found on the GitHub repository. To run it:</p>
+<p>The <a href="https://github.com/microsoft/agent-lightning/tree/1cb764261060f29f4e01b6537122d9570b2133de/examples/apo">Complete example code</a> can be found on the GitHub repository. To run it:</p>
 <p>Create a <code>.env</code> file with your API credentials:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nv">OPENAI_API_KEY</span><span class="o">=</span>your-api-key-here
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nv">OPENAI_API_BASE</span><span class="o">=</span>https://api.openai.com/v1<span class="w">  </span><span class="c1"># Optional</span>
