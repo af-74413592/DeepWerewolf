@@ -227,7 +227,7 @@ while len(input_ids) > 10000: （比maxlen稍微小一点）
         tokenize=True,
         )
 ```
-
+#### agentlightning/verl/trainer.py fit函数 self._load_checkpoint()下面最好 time.sleep(60) 一会，有的时候会闪退。
 ### 三、verlv0.5.0 改动 (需要手动修改)
 #### 注释掉 verl trainer/ppo/ray_trainer.py 415-418行 （因为不需要很大的train_batch_size）
 ```
