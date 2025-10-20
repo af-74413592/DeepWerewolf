@@ -148,6 +148,7 @@ if "Low Quality" in llm_quality_reward:
 
 #### 这几行是调用外部llm打分。文本通顺性reward，酌情添加
 #### 注意如果更改训练模型，记得替换self.tokenizer
+#### agentlightning/verl/trainer.py fit函数 self._load_checkpoint()下面最好 time.sleep(60) 一会，有的时候会闪退。
 
 ### 二、安装agentscope框架 （需要手动修改）
 #### 核心修改 手动处理think消息（因为新版vllm不在支持--enable_thinging格式消息返回）
@@ -227,7 +228,7 @@ while len(input_ids) > 10000: （比maxlen稍微小一点）
         tokenize=True,
         )
 ```
-#### agentlightning/verl/trainer.py fit函数 self._load_checkpoint()下面最好 time.sleep(60) 一会，有的时候会闪退。
+
 ### 三、verlv0.5.0 改动 (需要手动修改)
 #### 注释掉 verl trainer/ppo/ray_trainer.py 415-418行 （因为不需要很大的train_batch_size）
 ```
