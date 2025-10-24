@@ -1,4 +1,5 @@
 #   中文狼人杀 Agentic-RL 训练案例配置指南
+#### 32B模型 https://huggingface.co/haowu11/DeepWereWolf-Qwen3-32B-Grpo-Agentic-Chinese
 ####################################################################
 ### 基于框架版本信息
 #### - agent-lightning:  commit: 5724f63cfc75bcc2f4fb56958ef384d307717c18 | date: Sep 13, 2025 (或者直接pip install -e . 安装本仓库)
