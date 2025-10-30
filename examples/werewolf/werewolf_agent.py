@@ -333,10 +333,10 @@ async def create_player(role: str, NAME_TO_ROLE:  dict, ch_names: dict, moderato
     name = get_player_name(agent_names)
     NAME_TO_ROLE[name] = role
     #添加外部对抗性
-    # import random
-    # if random.random() < 0.8:
-    #纯对抗训练
-    if role in ["werewolf", "wolf_king"]:
+    import random
+    if random.random() < 0.8:
+    # #纯对抗训练 (太难学不会）
+    # if role in ["werewolf", "wolf_king"]:
         agent = ReActAgent(
             name=name,
             sys_prompt=Prompts.system_prompt,
@@ -1807,6 +1807,7 @@ class WerewolfAgent(LitAgent):
 if __name__ == "__main__":
 
     Trainer(n_workers=16).fit(WerewolfAgent(), "http://localhost:9999/")
+
 
 
 
