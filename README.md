@@ -1,4 +1,5 @@
 #   中文狼人杀 Agentic-RL 训练案例配置指南
+#### 8B模型 https://huggingface.co/haowu11/DeepWereWolf-Qwen3-8B-Grpo-Agentic-Chinese
 #### 32B模型 https://huggingface.co/haowu11/DeepWereWolf-Qwen3-32B-Grpo-Agentic-Chinese
 ####################################################################
 ### 基于框架版本信息
